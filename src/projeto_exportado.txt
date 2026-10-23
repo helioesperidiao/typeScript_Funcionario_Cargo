@@ -1,0 +1,2392 @@
+================================================================================
+HIERARQUIA DO PROJETO
+================================================================================
+src/
+├── controllers/
+│   ├── BaseController.ts
+│   ├── CargoController.ts
+│   └── FuncionarioController.ts
+├── dao/
+│   ├── CargoDAO.ts
+│   └── FuncionarioDAO.ts
+├── database/
+│   └── MongoDatabase.ts
+├── http/
+│   ├── asyncHandler.ts
+│   ├── ErrorResponse.ts
+│   ├── MeuTokenJWT.ts
+│   └── StandardResponse.ts
+├── middlewares/
+│   └── JwtMiddleware.ts
+├── models/
+│   ├── Cargo.ts
+│   └── Funcionario.ts
+├── public/
+│   ├── css/
+│   │   └── bootstrap.min.css
+│   ├── js/
+│   │   └── bootstrap.bundle.min.js
+│   ├── ApiService.js
+│   ├── cargos.html
+│   ├── dashboard.html
+│   ├── favicon.ico
+│   ├── funcionarios.html
+│   └── login.html
+├── routers/
+│   ├── CargoRouter.ts
+│   └── FuncionarioRouter.ts
+├── services/
+│   ├── CargoService.ts
+│   └── FuncionarioService.ts
+├── context.py
+├── index.ts
+└── Server.ts
+
+
+================================================================================
+CONTEÚDO DOS ARQUIVOS .ts
+================================================================================
+
+
+--------------------------------------------------------------------------------
+ARQUIVO: controllers\BaseController.ts
+--------------------------------------------------------------------------------
+// src/controllers/BaseController.ts
+import { Request } from "express";
+import { Funcionario } from "../models/Funcionario";
+import { ErrorResponse } from "../http/ErrorResponse";
+
+export abstract class BaseController {
+    protected getFuncionarioLogado(request: Request): Funcionario {
+        const funcionarioLogadoJson = (request as any).funcionarioLogado;
+        if (!funcionarioLogadoJson) {
+            // ✅ 401 em vez de Error genérico (antes virava 500)
+            throw new ErrorResponse(401, "Funcionário não autenticado");
+        }
+
+        const funcionarioLogado = new Funcionario();
+        funcionarioLogado.idFuncionario = funcionarioLogadoJson.idFuncionario;
+        funcionarioLogado.nomeFuncionario = funcionarioLogadoJson.nomeFuncionario;
+        funcionarioLogado.email = funcionarioLogadoJson.email;
+        if (funcionarioLogadoJson.cargo) {
+            funcionarioLogado.cargo.idCargo = funcionarioLogadoJson.cargo.idCargo;
+            funcionarioLogado.cargo.nomeCargo = funcionarioLogadoJson.cargo.nomeCargo;
+        }
+
+        return funcionarioLogado;
+    }
+
+    /**
+     * Valida que o corpo da requisição contém um objeto obrigatório
+     * (ex.: `{ funcionario: {...} }`, `{ cargo: {...} }`).
+     * Lança ErrorResponse(400) caso contrário.
+     */
+    protected requireBody(request: Request, key: string): any {
+        const value = request.body?.[key];
+        if (!value || typeof value !== "object") {
+            throw new ErrorResponse(400, `Corpo da requisição inválido: "${key}" é obrigatório`);
+        }
+        return value;
+    }
+}
+
+--------------------------------------------------------------------------------
+ARQUIVO: controllers\CargoController.ts
+--------------------------------------------------------------------------------
+import { Request, Response } from "express";
+import { CargoService } from "../services/CargoService";
+import { BaseController } from "./BaseController";
+import { StandardResponse } from "../http/StandardResponse";
+import { Cargo } from "../models/Cargo";
+import { Funcionario } from "../models/Funcionario";
+import { ErrorResponse } from "../http/ErrorResponse";
+
+export class CargoController extends BaseController {
+    private _cargoService: CargoService;
+
+    constructor(cargoServiceDependency: CargoService) {
+        super();
+        console.log("⬆️  CargoController.constructor()");
+        this._cargoService = cargoServiceDependency;
+    }
+
+    public create = async (request: Request, response: Response): Promise<void> => {
+        console.log("🔵 CargoController.create()");
+
+        const funcionarioLogado: Funcionario = this.getFuncionarioLogado(request);
+        const dados = this.requireBody(request, "cargo");
+
+        if (!dados.nomeCargo) {
+            throw new ErrorResponse(400, "nomeCargo é obrigatório");
+        }
+
+        const novoCargo = new Cargo();
+        novoCargo.nomeCargo = dados.nomeCargo;
+
+        const resultado = await this._cargoService.create(novoCargo, funcionarioLogado);
+
+        if (!resultado) {
+            StandardResponse.error("Falha ao cadastrar novo Cargo", null, 500).send(response);
+            return;
+        }
+
+        StandardResponse.created("Cadastro realizado com sucesso", {
+            cargos: [{
+                idCargo: novoCargo.idCargo,
+                nomeCargo: novoCargo.nomeCargo
+            }]
+        }).send(response);
+    };
+
+    public findAll = async (request: Request, response: Response): Promise<void> => {
+        console.log("🔵 CargoController.findAll()");
+        const funcionarioLogado: Funcionario = this.getFuncionarioLogado(request);
+        const arrayCargos = await this._cargoService.findAll(funcionarioLogado);
+        StandardResponse.success("Busca realizada com sucesso", { cargos: arrayCargos }).send(response);
+    };
+
+    public findById = async (request: Request, response: Response): Promise<void> => {
+        console.log("🔵 CargoController.findById()");
+        const funcionarioLogado: Funcionario = this.getFuncionarioLogado(request);
+        const cargoId = request.params.idCargo.toString();
+        const cargo = await this._cargoService.findById(cargoId, funcionarioLogado);
+
+        // ✅ Antes retornava 200 com cargos: null. Agora 404 é semântico.
+        if (!cargo) {
+            StandardResponse.notFound("Cargo não encontrado", { cargos: null }).send(response);
+            return;
+        }
+
+        StandardResponse.success("Executado com sucesso", { cargos: cargo }).send(response);
+    };
+
+    public update = async (request: Request, response: Response): Promise<void> => {
+        console.log("🔵 CargoController.update()");
+
+        const funcionarioLogado: Funcionario = this.getFuncionarioLogado(request);
+        const cargoId = request.params.idCargo.toString();
+        const dados = this.requireBody(request, "cargo");
+
+        const cargo = new Cargo();
+        cargo.idCargo = cargoId;
+        cargo.nomeCargo = dados.nomeCargo;
+
+        const atualizou = await this._cargoService.update(cargo, funcionarioLogado);
+
+        if (atualizou) {
+            StandardResponse.success("Atualizado com sucesso", {
+                cargos: [{ idCargo: cargoId, nomeCargo: dados.nomeCargo }]
+            }).send(response);
+        } else {
+            StandardResponse.notFound("Cargo não encontrado para atualização", {
+                cargos: [{ idCargo: cargoId, nomeCargo: dados.nomeCargo }]
+            }).send(response);
+        }
+    };
+
+    public delete = async (request: Request, response: Response): Promise<void> => {
+        console.log("🔵 CargoController.delete()");
+
+        const funcionarioLogado: Funcionario = this.getFuncionarioLogado(request);
+
+        const cargo = new Cargo();
+        cargo.idCargo = request.params.idCargo.toString();
+
+        const excluiu = await this._cargoService.delete(cargo, funcionarioLogado);
+
+        if (excluiu) {
+            StandardResponse.noContent().send(response);
+        } else {
+            StandardResponse.notFound("Cargo não encontrado para exclusão", {
+                cargos: [{ idCargo: cargo.idCargo }]
+            }).send(response);
+        }
+    };
+
+    /**
+     * Retorna o total de cargos cadastrados.
+     * 🔹 Rota PROTEGIDA por JWT (mantida assim pelo router).
+     */
+    public count = async (request: Request, response: Response): Promise<void> => {
+        console.log("🔵 CargoController.count()");
+        const funcionarioLogado: Funcionario = this.getFuncionarioLogado(request);
+        const total = await this._cargoService.count(funcionarioLogado);
+        StandardResponse.success("Total de cargos obtido", { total }).send(response);
+    };
+}
+
+--------------------------------------------------------------------------------
+ARQUIVO: controllers\FuncionarioController.ts
+--------------------------------------------------------------------------------
+import { Request, Response } from "express";
+import { FuncionarioService } from "../services/FuncionarioService";
+import { Funcionario } from "../models/Funcionario";
+import { StandardResponse } from "../http/StandardResponse";
+import { Cargo } from "../models/Cargo";
+import { BaseController } from "./BaseController";
+import { ErrorResponse } from "../http/ErrorResponse";
+
+export class FuncionarioController extends BaseController {
+    private _funcionarioService: FuncionarioService;
+
+    constructor(funcionarioServiceDependency: FuncionarioService) {
+        super();
+        console.log("⬆️  FuncionarioController.constructor()");
+        this._funcionarioService = funcionarioServiceDependency;
+    }
+
+    public login = async (request: Request, response: Response): Promise<void> => {
+        console.log("🔵 FuncionarioController.login()");
+
+        const dados = this.requireBody(request, "funcionario");
+        if (!dados.email || !dados.senha) {
+            throw new ErrorResponse(400, "email e senha são obrigatórios");
+        }
+
+        const funcionario = new Funcionario();
+        funcionario.email = dados.email;
+        funcionario.senha = dados.senha;
+
+        const resultado = await this._funcionarioService.loginFuncionario(funcionario);
+        StandardResponse.success("Login efetuado com sucesso!", resultado).send(response);
+    };
+
+    public create = async (request: Request, response: Response): Promise<void> => {
+        console.log("🔵 FuncionarioController.create()");
+
+        const funcionarioLogado = this.getFuncionarioLogado(request);
+        const dados = this.requireBody(request, "funcionario");
+
+        if (!dados.cargo?.idCargo) {
+            throw new ErrorResponse(400, "cargo.idCargo é obrigatório");
+        }
+        if (!dados.senha) {
+            throw new ErrorResponse(400, "senha é obrigatória");
+        }
+
+        const funcionario = new Funcionario();
+        funcionario.nomeFuncionario = dados.nomeFuncionario;
+
+        const cargo = new Cargo();
+        cargo.idCargo = dados.cargo.idCargo.toString();
+        funcionario.cargo = cargo;
+
+        funcionario.email = dados.email;
+        funcionario.recebeValeTransporte = dados.recebeValeTransporte;
+        funcionario.senha = dados.senha;
+
+        const resultado = await this._funcionarioService.create(funcionario, funcionarioLogado);
+        StandardResponse.created("Cadastro realizado com sucesso", { funcionario: resultado }).send(response);
+    };
+
+    public findAll = async (request: Request, response: Response): Promise<void> => {
+        console.log("🔵 FuncionarioController.findAll()");
+        const funcionarioLogado = this.getFuncionarioLogado(request);
+        const listaFuncionarios = await this._funcionarioService.findAll(funcionarioLogado);
+        StandardResponse.success("Executado com sucesso", { funcionarios: listaFuncionarios }).send(response);
+    };
+
+    public findById = async (request: Request, response: Response): Promise<void> => {
+        console.log("🔵 FuncionarioController.findById()");
+        const funcionarioLogado = this.getFuncionarioLogado(request);
+        const idFuncionario = request.params.idFuncionario.toString();
+        const funcionario = await this._funcionarioService.findById(idFuncionario, funcionarioLogado);
+        StandardResponse.success("Executado com sucesso", funcionario).send(response);
+    };
+
+    public update = async (request: Request, response: Response): Promise<void> => {
+        console.log("🔵 FuncionarioController.update()");
+
+        const funcionarioLogado = this.getFuncionarioLogado(request);
+        const idFuncionario = request.params.idFuncionario.toString();
+        const dados = this.requireBody(request, "funcionario");
+
+        if (!dados.cargo?.idCargo) {
+            throw new ErrorResponse(400, "cargo.idCargo é obrigatório");
+        }
+
+        const funcionario = new Funcionario();
+        funcionario.idFuncionario = idFuncionario;
+        funcionario.nomeFuncionario = dados.nomeFuncionario;
+
+        const cargo = new Cargo();
+        cargo.idCargo = dados.cargo.idCargo;
+        funcionario.cargo = cargo;
+
+        funcionario.email = dados.email;
+        funcionario.recebeValeTransporte = dados.recebeValeTransporte;
+
+        // ✅ Só define a senha se foi enviada (evita apagar a senha atual)
+        if (dados.senha !== undefined && dados.senha !== null && dados.senha !== "") {
+            funcionario.senha = dados.senha;
+        }
+
+        const atualizou = await this._funcionarioService.updateFuncionario(funcionario, funcionarioLogado);
+
+        // ✅ Antes sempre respondia 200. Agora responde 404 quando não encontrou.
+        if (!atualizou) {
+            StandardResponse.notFound("Funcionário não encontrado para atualização", {
+                funcionario: { idFuncionario }
+            }).send(response);
+            return;
+        }
+
+        StandardResponse.success("Atualizado com sucesso", {
+            funcionario: {
+                idFuncionario,
+                nomeFuncionario: dados.nomeFuncionario
+            }
+        }).send(response);
+    };
+
+    public delete = async (request: Request, response: Response): Promise<void> => {
+        console.log(`🔵 FuncionarioController.delete(${request.params.idFuncionario})`);
+
+        const funcionarioLogado = this.getFuncionarioLogado(request);
+        const idFuncionario = request.params.idFuncionario.toString();
+
+        const funcionario = new Funcionario();
+        funcionario.idFuncionario = idFuncionario;
+
+        const excluiu = await this._funcionarioService.deleteFuncionario(funcionario, funcionarioLogado);
+
+        if (!excluiu) {
+            StandardResponse.notFound("Funcionário não encontrado", {
+                message: `Não existe funcionário com id ${idFuncionario}`
+            }).send(response);
+            return;
+        }
+
+        StandardResponse.noContent().send(response);
+    };
+
+    public count = async (request: Request, response: Response): Promise<void> => {
+        console.log("🔵 FuncionarioController.count()");
+        const funcionarioLogado = this.getFuncionarioLogado(request);
+        const total = await this._funcionarioService.count(funcionarioLogado);
+        StandardResponse.success("Total de funcionários obtido", { total }).send(response);
+    };
+
+    public countByCargoId = async (request: Request, response: Response): Promise<void> => {
+        console.log("🔵 FuncionarioController.countByCargoId()");
+        const funcionarioLogado = this.getFuncionarioLogado(request);
+        const cargoId = request.params.idCargo.toString();
+        const total = await this._funcionarioService.countByCargoId(cargoId, funcionarioLogado);
+        StandardResponse.success(`Total de funcionários com o cargo ID ${cargoId}`, { cargoId, total }).send(response);
+    };
+}
+
+--------------------------------------------------------------------------------
+ARQUIVO: dao\CargoDAO.ts
+--------------------------------------------------------------------------------
+import { Collection, ObjectId, Filter, UpdateFilter, Document, OptionalId } from "mongodb";
+import { Cargo } from "../models/Cargo";
+import { MongoDatabase } from "../database/MongoDatabase";
+
+export class CargoDAO {
+    private _database: MongoDatabase;
+    private _indexesPromise: Promise<void> | null = null;
+
+    constructor(dbInstance: MongoDatabase) {
+        console.log("⬆️ CargoDAO.constructor()");
+        this._database = dbInstance;
+    }
+
+    // ✅ Índice único case-insensitive em nomeCargo
+    private async ensureIndexes(collection: Collection<Document>): Promise<void> {
+        if (!this._indexesPromise) {
+            this._indexesPromise = (async () => {
+                try {
+                    await collection.createIndex(
+                        { nomeCargo: 1 },
+                        {
+                            unique: true,
+                            name: "nomeCargo_unique_ci",
+                            collation: { locale: "pt", strength: 2 }
+                        }
+                    );
+                } catch (err: any) {
+                    console.warn("⚠️ Índice único de nomeCargo não criado:", err?.message);
+                }
+            })();
+        }
+        return this._indexesPromise;
+    }
+
+    private async getCollection(): Promise<Collection<Document>> {
+        const db = await this._database.getDb();
+        const col = db.collection("cargo");
+        await this.ensureIndexes(col);
+        return col;
+    }
+
+    private escapeRegex(text: string): string {
+        return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    public async create(cargo: Cargo): Promise<Cargo> {
+        console.log("🟢 CargoDAO.create()");
+        const collection = await this.getCollection();
+        const doc: OptionalId<Document> = { nomeCargo: cargo.nomeCargo };
+        const result = await collection.insertOne(doc);
+        if (!result.insertedId) {
+            throw new Error("Falha ao inserir cargo");
+        }
+        cargo.idCargo = result.insertedId.toString();
+        return cargo;
+    }
+
+    public async delete(objCargoModel: Cargo): Promise<boolean> {
+        console.log("🟢 CargoDAO.delete(" + objCargoModel.idCargo + ")");
+        const collection = await this.getCollection();
+        const filter: Filter<Document> = { _id: new ObjectId(objCargoModel.idCargo) };
+        const result = await collection.deleteOne(filter);
+        return result.deletedCount > 0;
+    }
+
+    public async update(objCargoModel: Cargo): Promise<boolean> {
+        console.log("🟢 CargoDAO.update()");
+        const collection = await this.getCollection();
+        const filter: Filter<Document> = { _id: new ObjectId(objCargoModel.idCargo) };
+        const update: UpdateFilter<Document> = { $set: { nomeCargo: objCargoModel.nomeCargo } };
+        const result = await collection.updateOne(filter, update);
+        // ✅ matchedCount: documento existe, mesmo sem mudança
+        return result.matchedCount > 0;
+    }
+
+    public async findAll(): Promise<Cargo[]> {
+        console.log("🟢 CargoDAO.findAll()");
+        const collection = await this.getCollection();
+        const docs = await collection.find({}).toArray();
+        return docs.map(doc => this.toCargo(doc));
+    }
+
+    public async findById(idCargo: string): Promise<Cargo | null> {
+        console.log("🟢 CargoDAO.findById()");
+        const collection = await this.getCollection();
+        const filter: Filter<Document> = { _id: new ObjectId(idCargo) };
+        const doc = await collection.findOne(filter);
+        return doc ? this.toCargo(doc) : null;
+    }
+
+    public async findByField(field: string, value: any): Promise<Cargo[]> {
+        console.log(`🟢 CargoDAO.findByField() - Campo: ${field}, Valor: ${value}`);
+        const allowedFields = ["_id", "nomeCargo"];
+        if (!allowedFields.includes(field)) {
+            throw new Error(`Campo inválido para busca: ${field}`);
+        }
+
+        const collection = await this.getCollection();
+        let filter: Filter<Document> = {};
+
+        if (field === "_id") {
+            filter = { _id: new ObjectId(value) };
+        } else if (field === "nomeCargo") {
+            // ✅ Busca case-insensitive, correspondência exata, com escape de regex
+            filter = {
+                nomeCargo: { $regex: `^${this.escapeRegex(String(value))}$`, $options: "i" }
+            };
+        } else {
+            filter = { [field]: value };
+        }
+
+        const docs = await collection.find(filter).toArray();
+        return docs.map(doc => this.toCargo(doc));
+    }
+
+    public async count(): Promise<number> {
+        console.log("🟢 CargoDAO.count()");
+        const collection = await this.getCollection();
+        return await collection.countDocuments();
+    }
+
+    private toCargo(doc: any): Cargo {
+        const cargo = new Cargo();
+        cargo.idCargo = doc._id.toHexString();
+        cargo.nomeCargo = doc.nomeCargo;
+        return cargo;
+    }
+}
+
+--------------------------------------------------------------------------------
+ARQUIVO: dao\FuncionarioDAO.ts
+--------------------------------------------------------------------------------
+import { Collection, ObjectId, Filter, UpdateFilter, Document, OptionalId } from "mongodb";
+import { Funcionario } from "../models/Funcionario";
+import { Cargo } from "../models/Cargo";
+import { MongoDatabase } from "../database/MongoDatabase";
+
+export class FuncionarioDAO {
+    private _database: MongoDatabase;
+    private _indexesPromise: Promise<void> | null = null;
+
+    constructor(dbInstance: MongoDatabase) {
+        console.log("⬆️ FuncionarioDAO.constructor()");
+        this._database = dbInstance;
+    }
+
+    // ✅ Cria índice único de email (uma vez por processo)
+    private async ensureIndexes(collection: Collection<Document>): Promise<void> {
+        if (!this._indexesPromise) {
+            this._indexesPromise = (async () => {
+                try {
+                    await collection.createIndex(
+                        { email: 1 },
+                        { unique: true, name: "email_unique" }
+                    );
+                } catch (err: any) {
+                    console.warn("⚠️ Índice único de email não criado:", err?.message);
+                }
+            })();
+        }
+        return this._indexesPromise;
+    }
+
+    private async getCollection(): Promise<Collection<Document>> {
+        const db = await this._database.getDb();
+        const col = db.collection("funcionario");
+        await this.ensureIndexes(col);
+        return col;
+    }
+
+    // ======================== CRUD ========================
+
+    public async create(objFuncionarioModel: Funcionario): Promise<Funcionario> {
+        console.log("🟢 FuncionarioDAO.create()");
+        const collection = await this.getCollection();
+
+        if (!objFuncionarioModel.cargo) {
+            throw new Error("Cargo não informado");
+        }
+
+        const senha = (objFuncionarioModel as any)._senha || objFuncionarioModel.senha || '';
+
+        const doc: OptionalId<Document> = {
+            nomeFuncionario: objFuncionarioModel.nomeFuncionario,
+            email: objFuncionarioModel.email,
+            senha,
+            recebeValeTransporte: objFuncionarioModel.recebeValeTransporte,
+            cargoId: new ObjectId(objFuncionarioModel.cargo.idCargo),
+        };
+
+        const result = await collection.insertOne(doc);
+        if (!result.insertedId) {
+            throw new Error("Falha ao inserir funcionário");
+        }
+
+        objFuncionarioModel.idFuncionario = result.insertedId.toHexString();
+        return objFuncionarioModel;
+    }
+
+    public async delete(objFuncionarioModel: Funcionario): Promise<boolean> {
+        console.log(`🟢 FuncionarioDAO.delete(${objFuncionarioModel.idFuncionario})`);
+        const collection = await this.getCollection();
+        const filter: Filter<Document> = { _id: new ObjectId(objFuncionarioModel.idFuncionario) };
+        const result = await collection.deleteOne(filter);
+        return result.deletedCount > 0;
+    }
+
+    public async update(objFuncionarioModel: Funcionario): Promise<boolean> {
+        console.log(`🟢 FuncionarioDAO.update(${objFuncionarioModel.idFuncionario})`);
+        const collection = await this.getCollection();
+        const filter: Filter<Document> = { _id: new ObjectId(objFuncionarioModel.idFuncionario) };
+
+        const updateData: any = {
+            nomeFuncionario: objFuncionarioModel.nomeFuncionario,
+            email: objFuncionarioModel.email,
+            recebeValeTransporte: objFuncionarioModel.recebeValeTransporte,
+        };
+
+        const senha = (objFuncionarioModel as any)._senha || objFuncionarioModel.senha;
+        if (senha) {
+            updateData.senha = senha;
+        }
+
+        if (objFuncionarioModel.cargo?.idCargo) {
+            updateData.cargoId = new ObjectId(objFuncionarioModel.cargo.idCargo);
+        }
+
+        const update: UpdateFilter<Document> = { $set: updateData };
+        const result = await collection.updateOne(filter, update);
+        // ✅ matchedCount: documento existe, mesmo que nada mude
+        return result.matchedCount > 0;
+    }
+
+    // ======================== CONSULTAS ========================
+
+    public async findAll(): Promise<Funcionario[]> {
+        console.log("🟢 FuncionarioDAO.findAll()");
+        const collection = await this.getCollection();
+
+        const pipeline = [
+            {
+                $lookup: {
+                    from: "cargo",
+                    localField: "cargoId",
+                    foreignField: "_id",
+                    as: "cargoInfo"
+                }
+            },
+            { $unwind: { path: "$cargoInfo", preserveNullAndEmptyArrays: false } },
+            {
+                $project: {
+                    _id: 0,
+                    idFuncionario: "$_id",
+                    nomeFuncionario: 1,
+                    email: 1,
+                    // ✅ senha NÃO é projetada (evita vazamento)
+                    recebeValeTransporte: 1,
+                    cargo: {
+                        idCargo: "$cargoInfo._id",
+                        nomeCargo: "$cargoInfo.nomeCargo"
+                    }
+                }
+            }
+        ];
+
+        const docs = await collection.aggregate(pipeline).toArray();
+        return docs.map(doc => this.toFuncionario(doc));
+    }
+
+    public async findById(idFuncionario: string): Promise<Funcionario | null> {
+        console.log(`🟢 FuncionarioDAO.findById(${idFuncionario})`);
+        const collection = await this.getCollection();
+        const filter: Filter<Document> = { _id: new ObjectId(idFuncionario) };
+
+        const pipeline = [
+            { $match: filter },
+            {
+                $lookup: {
+                    from: "cargo",
+                    localField: "cargoId",
+                    foreignField: "_id",
+                    as: "cargoInfo"
+                }
+            },
+            { $unwind: { path: "$cargoInfo", preserveNullAndEmptyArrays: false } },
+            {
+                $project: {
+                    _id: 0,
+                    idFuncionario: "$_id",
+                    nomeFuncionario: 1,
+                    email: 1,
+                    recebeValeTransporte: 1,
+                    cargo: {
+                        idCargo: "$cargoInfo._id",
+                        nomeCargo: "$cargoInfo.nomeCargo"
+                    }
+                }
+            }
+        ];
+
+        const docs = await collection.aggregate(pipeline).toArray();
+        if (docs.length === 0) return null;
+        return this.toFuncionario(docs[0]);
+    }
+
+    public async findByField(field: string, value: any): Promise<Funcionario[]> {
+        console.log(`🟢 FuncionarioDAO.findByField() - Campo: ${field}, Valor: ${value}`);
+        const allowedFields = ["_id", "nomeFuncionario", "email", "recebeValeTransporte", "cargoId"];
+        if (!allowedFields.includes(field)) {
+            throw new Error(`Campo inválido para busca: ${field}`);
+        }
+
+        const collection = await this.getCollection();
+        let filter: Filter<Document> = {};
+        if (field === "_id") {
+            filter = { _id: new ObjectId(value) };
+        } else {
+            filter = { [field]: value };
+        }
+
+        const pipeline = [
+            { $match: filter },
+            {
+                $lookup: {
+                    from: "cargo",
+                    localField: "cargoId",
+                    foreignField: "_id",
+                    as: "cargoInfo"
+                }
+            },
+            { $unwind: { path: "$cargoInfo", preserveNullAndEmptyArrays: false } },
+            {
+                $project: {
+                    _id: 0,
+                    idFuncionario: "$_id",
+                    nomeFuncionario: 1,
+                    email: 1,
+                    recebeValeTransporte: 1,
+                    cargo: {
+                        idCargo: "$cargoInfo._id",
+                        nomeCargo: "$cargoInfo.nomeCargo"
+                    }
+                }
+            }
+        ];
+
+        const docs = await collection.aggregate(pipeline).toArray();
+        return docs.map(doc => this.toFuncionario(doc));
+    }
+
+    /** Usado apenas no login: inclui a senha (hash) para comparação com bcrypt. */
+    public async findByEmail(email: string): Promise<Funcionario | null> {
+        console.log(`🟢 FuncionarioDAO.findByEmail(${email})`);
+        const collection = await this.getCollection();
+
+        const pipeline = [
+            { $match: { email } },
+            {
+                $lookup: {
+                    from: "cargo",
+                    localField: "cargoId",
+                    foreignField: "_id",
+                    as: "cargoInfo"
+                }
+            },
+            { $unwind: { path: "$cargoInfo", preserveNullAndEmptyArrays: false } },
+            {
+                $project: {
+                    _id: 0,
+                    idFuncionario: "$_id",
+                    nomeFuncionario: 1,
+                    email: 1,
+                    senha: 1,  // ✅ só aqui a senha é retornada
+                    recebeValeTransporte: 1,
+                    cargo: {
+                        idCargo: "$cargoInfo._id",
+                        nomeCargo: "$cargoInfo.nomeCargo"
+                    }
+                }
+            }
+        ];
+
+        const docs = await collection.aggregate(pipeline).toArray();
+        if (docs.length === 0) return null;
+        return this.toFuncionario(docs[0]);
+    }
+
+    // ======================== CONTAGENS ========================
+
+    public async count(): Promise<number> {
+        console.log("🟢 FuncionarioDAO.count()");
+        const collection = await this.getCollection();
+        return await collection.countDocuments();
+    }
+
+    public async countByCargoId(cargoId: string): Promise<number> {
+        console.log(`🟢 FuncionarioDAO.countByCargoId(${cargoId})`);
+        const collection = await this.getCollection();
+        return await collection.countDocuments({ cargoId: new ObjectId(cargoId) });
+    }
+
+    // ======================== AUXILIAR ========================
+
+    private toFuncionario(doc: any): Funcionario {
+        const cargo = new Cargo();
+        cargo.idCargo = doc.cargo.idCargo.toHexString ? doc.cargo.idCargo.toHexString() : doc.cargo.idCargo;
+        cargo.nomeCargo = doc.cargo.nomeCargo;
+
+        const funcionario = new Funcionario();
+        funcionario.idFuncionario = doc.idFuncionario.toHexString ? doc.idFuncionario.toHexString() : doc.idFuncionario;
+        funcionario.nomeFuncionario = doc.nomeFuncionario;
+        funcionario.email = doc.email;
+        (funcionario as any)._senha = doc.senha || '';
+        funcionario.recebeValeTransporte = doc.recebeValeTransporte;
+        funcionario.cargo = cargo;
+
+        return funcionario;
+    }
+}
+
+--------------------------------------------------------------------------------
+ARQUIVO: database\MongoDatabase.ts
+--------------------------------------------------------------------------------
+import { MongoClient, Db, MongoClientOptions } from "mongodb";
+import dotenv from "dotenv";
+
+// Carrega variáveis de ambiente do arquivo .env
+dotenv.config();
+
+/**
+ * Classe responsável por gerenciar a conexão com o MongoDB.
+ * 
+ * - Suporta passagem de URI, nome do banco e opções via construtor.
+ * - Prioriza variáveis de ambiente (se definidas) sobre os valores padrão.
+ * - Usa atributos privados para segurança.
+ * - Mantém um cliente singleton (compartilhado entre todas as instâncias).
+ * - Fornece o objeto Db para operações no banco.
+ * 
+ * @example
+ * // Configuração via .env (recomendado)
+ * // .env:
+ * // MONGO_URI=mongodb://localhost:27017
+ * // MONGO_DATABASE=meu_banco
+ * // MONGO_MAX_POOL_SIZE=100
+ * 
+ * const db = new MongoDatabase();
+ * await db.connect();
+ * 
+ * // Ou passando configurações diretamente (sobrescreve .env)
+ * const db = new MongoDatabase({
+ *   uri: "mongodb://localhost:27017",
+ *   database: "gestao_rh"
+ * });
+ */
+export class MongoDatabase {
+    // ======================== SINGLETON ========================
+
+    /** Cliente singleton compartilhado entre todas as instâncias. */
+    private static _client: MongoClient | null = null;
+    /** Instância do banco de dados singleton. */
+    private static _db: Db | null = null;
+
+    // ======================== CONFIGURAÇÃO ========================
+
+    /** URI de conexão com o MongoDB. */
+    private _uri: string;
+    /** Nome do banco de dados a ser utilizado. */
+    private _databaseName: string;
+    /** Opções de configuração do cliente MongoDB. */
+    private _options: MongoClientOptions;
+
+    // ======================== CONSTRUTOR ========================
+
+    /**
+     * Construtor da classe MongoDatabase.
+     * 
+     * As configurações são carregadas na seguinte ordem de prioridade:
+     * 1. Valores passados no objeto `config`.
+     * 2. Variáveis de ambiente (ex: `MONGO_URI`, `MONGO_DATABASE`, `MONGO_MAX_POOL_SIZE`, etc.).
+     * 3. Valores padrão (fallback).
+     * 
+     * @param config - Objeto opcional para sobrescrever as variáveis de ambiente.
+     * @param config.uri - URI do MongoDB (padrão: variável `MONGO_URI` ou "mongodb://localhost:27017").
+     * @param config.database - Nome do banco de dados (padrão: variável `MONGO_DATABASE` ou "faltas_cti").
+     * @param config.options - Opções adicionais do MongoClient (ex: maxPoolSize, minPoolSize, etc.).
+     *                        As opções podem ser definidas via variáveis de ambiente com prefixo `MONGO_`.
+     * 
+     * @example
+     * // Usando .env
+     * const db = new MongoDatabase();
+     * 
+     * // Sobrescrevendo via construtor
+     * const db = new MongoDatabase({
+     *   uri: "mongodb://localhost:27017",
+     *   database: "gestao_rh",
+     *   options: { maxPoolSize: 100 }
+     * });
+     */
+    constructor(config: { uri?: string; database?: string; options?: MongoClientOptions } = {}) {
+        // Carrega variáveis de ambiente
+        const envUri = process.env.MONGO_URI;
+        const envDatabase = process.env.MONGO_DATABASE;
+        const envMaxPoolSize = parseInt(process.env.MONGO_MAX_POOL_SIZE || '');
+        const envMinPoolSize = parseInt(process.env.MONGO_MIN_POOL_SIZE || '');
+        const envConnectTimeout = parseInt(process.env.MONGO_CONNECT_TIMEOUT_MS || '');
+        const envSocketTimeout = parseInt(process.env.MONGO_SOCKET_TIMEOUT_MS || '');
+
+        // Define URI (prioridade: config.uri > envUri > padrão)
+        this._uri = config.uri || envUri || "mongodb://localhost:27017";
+
+        // Define database (prioridade: config.database > envDatabase > padrão)
+        this._databaseName = config.database || envDatabase || "faltas_cti";
+
+        // Define opções (prioridade: config.options > env > padrão)
+        this._options = {
+            maxPoolSize: config.options?.maxPoolSize || (isNaN(envMaxPoolSize) ? 50 : envMaxPoolSize),
+            minPoolSize: config.options?.minPoolSize || (isNaN(envMinPoolSize) ? 10 : envMinPoolSize),
+            connectTimeoutMS: config.options?.connectTimeoutMS || (isNaN(envConnectTimeout) ? 5000 : envConnectTimeout),
+            socketTimeoutMS: config.options?.socketTimeoutMS || (isNaN(envSocketTimeout) ? 45000 : envSocketTimeout),
+            ...config.options, // Permite sobrescrever outras opções não mapeadas
+        };
+
+        console.log(`🔧 MongoDatabase configurado:
+  URI: ${this._uri}
+  Database: ${this._databaseName}
+  MaxPoolSize: ${this._options.maxPoolSize}
+  MinPoolSize: ${this._options.minPoolSize}
+  ConnectTimeout: ${this._options.connectTimeoutMS}ms
+  SocketTimeout: ${this._options.socketTimeoutMS}ms`);
+    }
+
+    // ======================== MÉTODOS PÚBLICOS ========================
+
+    /**
+     * Conecta ao MongoDB e retorna o cliente.
+     * 
+     * Se o cliente já existir (singleton), reutiliza a conexão existente.
+     * Em caso de erro, encerra o processo com código 1.
+     * 
+     * @returns Cliente MongoDB conectado.
+     * @throws {Error} Se a conexão falhar (o processo é encerrado).
+     * 
+     * @example
+     * const client = await db.connect();
+     * console.log(client.topology.s.description);
+     */
+    public async connect(): Promise<MongoClient> {
+        if (!MongoDatabase._client) {
+            try {
+                MongoDatabase._client = new MongoClient(this._uri, this._options);
+                await MongoDatabase._client.connect();
+                console.log("⬆️ Conectado ao MongoDB com sucesso!");
+
+                // Inicializa o banco de dados
+                MongoDatabase._db = MongoDatabase._client.db(this._databaseName);
+            } catch (error: any) {
+                console.error("❌ Falha ao conectar ao MongoDB:", error.message);
+                process.exit(1);
+            }
+        }
+        return MongoDatabase._client;
+    }
+
+    /**
+     * Retorna o cliente MongoDB já existente ou cria uma nova conexão.
+     * 
+     * @returns Cliente MongoDB ativo (conectado).
+     * 
+     * @example
+     * const client = await db.getClient();
+     */
+    public async getClient(): Promise<MongoClient> {
+        return await this.connect();
+    }
+
+    /**
+     * Retorna a instância do banco de dados (Db) para operações.
+     * 
+     * Garante que a conexão esteja ativa antes de retornar o objeto Db.
+     * 
+     * @returns Objeto Db do MongoDB.
+     * 
+     * @example
+     * const db = await dbConnection.getDb();
+     * const colecao = db.collection("funcionarios");
+     * const docs = await colecao.find({}).toArray();
+     */
+    public async getDb(): Promise<Db> {
+        await this.connect(); // Garante que o cliente está conectado
+        return MongoDatabase._db!;
+    }
+
+    /**
+     * Fecha a conexão com o MongoDB.
+     * 
+     * Útil para encerrar a aplicação de forma limpa, liberando recursos.
+     * Após o fechamento, o singleton é reiniciado (cliente e db null).
+     * 
+     * @returns Promise void.
+     * 
+     * @example
+     * // Em um encerramento gracioso da aplicação
+     * process.on('SIGTERM', async () => {
+     *   await db.close();
+     *   process.exit(0);
+     * });
+     */
+    public async close(): Promise<void> {
+        if (MongoDatabase._client) {
+            await MongoDatabase._client.close();
+            MongoDatabase._client = null;
+            MongoDatabase._db = null;
+            console.log("⬆️ Conexão com MongoDB fechada.");
+        }
+    }
+}
+
+--------------------------------------------------------------------------------
+ARQUIVO: http\asyncHandler.ts
+--------------------------------------------------------------------------------
+// src/http/asyncHandler.ts
+import { Request, Response, NextFunction, RequestHandler } from "express";
+
+/**
+ * Encapsula um handler async para que rejeições de Promise sejam
+ * encaminhadas ao middleware de erro do Express (via next(err)).
+ *
+ * No Express 4, sem isso, um `throw` dentro de um handler `async`
+ * não chega ao middleware de erro e a requisição pode travar.
+ *
+ * @example
+ * router.post("/", jwtMiddleware.validateToken, asyncHandler(controller.create));
+ */
+export const asyncHandler = (
+    fn: (req: Request, res: Response, next: NextFunction) => Promise<any>
+): RequestHandler => {
+    return (req, res, next) => {
+        Promise.resolve(fn(req, res, next)).catch(next);
+    };
+};
+
+--------------------------------------------------------------------------------
+ARQUIVO: http\ErrorResponse.ts
+--------------------------------------------------------------------------------
+/**
+ * Classe personalizada de erro para a aplicação.
+ * 
+ * Estende a classe nativa Error do JavaScript para incluir:
+ * - Código HTTP (httpCode)
+ * - Informações adicionais sobre o erro (error)
+ * 
+ * Pode ser utilizada em middlewares ou serviços para padronizar respostas de erro.
+ * 
+ * @example
+ * // Lançando um erro 404 com detalhes adicionais
+ * throw new ErrorResponse(404, "Recurso não encontrado", { id: 123, type: "Cargo" });
+ * 
+ * // Capturando no middleware de erro
+ * if (error instanceof ErrorResponse) {
+ *   return response.status(error.httpCode).json({
+ *     success: false,
+ *     message: error.message,
+ *     error: error.error
+ *   });
+ * }
+ */
+export class ErrorResponse extends Error {
+    private _httpCode: number;
+    private _error: any;
+    private _name: string;
+
+    /**
+     * Construtor da classe ErrorResponse.
+     * 
+     * @param {number} httpCode - Código de status HTTP (ex: 400, 404, 500).
+     * @param {string} message - Mensagem de erro descritiva.
+     * @param {any} [error=null] - Objeto adicional com detalhes do erro (opcional).
+     * 
+     * @example
+     * const erro = new ErrorResponse(400, "Dados inválidos", { campo: "email", motivo: "formato incorreto" });
+     */
+    constructor(httpCode: number, message: string, error: any = null) {
+        super(message);
+        this._name = "ErrorResponse";
+        this._httpCode = httpCode;
+        this._error = error;
+
+        // Mantém o stack trace adequado para instâncias de ErrorResponse
+        Object.setPrototypeOf(this, ErrorResponse.prototype);
+    }
+
+    /**
+     * Retorna o código HTTP associado ao erro.
+     * 
+     * @returns {number} Código HTTP (ex: 400, 404, 500).
+     */
+    get httpCode(): number {
+        return this._httpCode;
+    }
+
+    /**
+     * Retorna informações adicionais sobre o erro.
+     * 
+     * @returns {any} Objeto JSON ou string com detalhes do erro, ou null se não informado.
+     */
+    get error(): any {
+        return this._error;
+    }
+
+    /**
+     * Retorna o nome do erro.
+     * 
+     * @returns {string} Nome da classe de erro ("ErrorResponse").
+     */
+    get name(): string {
+        return this._name;
+    }
+}
+
+--------------------------------------------------------------------------------
+ARQUIVO: http\MeuTokenJWT.ts
+--------------------------------------------------------------------------------
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import { Cargo } from '../models/Cargo';
+import { Funcionario } from '../models/Funcionario';
+
+export class MeuTokenJWT {
+    private _key: string;
+    private _alg: string;
+    private _type: string;
+    private _iss: string;
+    private _aud: string;
+    private _sub: string;
+    private _duracaoToken: number;
+
+    constructor() {
+        this._key = process.env.JWT_SECRET || "x9S4q0v+V0IjvHkG20uAxaHx1ijj+q1HWjHKv+ohxp/oK+77qyXkVj/l4QYHHTF3";
+        this._alg = process.env.JWT_ALGORITHM || "HS256";
+        this._type = process.env.JWT_TYPE || "JWT";
+        this._iss = process.env.JWT_ISSUER || "http://localhost";
+        this._aud = process.env.JWT_AUDIENCE || "http://localhost";
+        this._sub = process.env.JWT_SUBJECT || "acesso_sistema";
+        this._duracaoToken = parseInt(process.env.JWT_EXPIRES_IN_SECONDS || '', 10) || (3600 * 24 * 60);
+
+        console.log(`🔐 MeuTokenJWT configurado:
+  Algoritmo: ${this._alg}
+  Tipo: ${this._type}
+  Emissor: ${this._iss}
+  Audiência: ${this._aud}
+  Assunto: ${this._sub}
+  Duração: ${this._duracaoToken}s (${Math.round(this._duracaoToken / 86400)} dias)`);
+    }
+
+    public gerarToken = (funcionario: Funcionario): string => {
+        console.log("🔷  MeuTokenJWT.gerarToken()");
+        const headers = { alg: this._alg, typ: this._type };
+
+        const payload = {
+            iss: this._iss,
+            aud: this._aud,
+            sub: this._sub,
+            iat: Math.floor(Date.now() / 1000),
+            exp: Math.floor(Date.now() / 1000) + this._duracaoToken,
+            nbf: Math.floor(Date.now() / 1000),
+            jti: crypto.randomBytes(16).toString("hex"),
+            email: funcionario.email,
+            cargo: {
+                idCargo: funcionario.cargo.idCargo,
+                nomeCargo: funcionario.cargo.nomeCargo
+            },
+            nomeFuncionario: funcionario.nomeFuncionario,
+            idFuncionario: funcionario.idFuncionario
+        };
+
+        return jwt.sign(payload, this._key, {
+            algorithm: this._alg as jwt.Algorithm,
+            header: headers,
+        });
+    };
+
+    public validarToken = (stringToken: string): Funcionario | null => {
+        console.log("🔷  MeuTokenJWT.validarToken()");
+        if (!stringToken || stringToken.trim() === "") {
+            console.error("Token não fornecido ou vazio");
+            return null;
+        }
+
+        const token = stringToken.replace("Bearer ", "").trim();
+
+        try {
+            // ✅ issuer/audience agora são validados
+            const decoded: any = jwt.verify(token, this._key, {
+                algorithms: [this._alg as jwt.Algorithm],
+                issuer: this._iss,
+                audience: this._aud,
+            });
+
+            const cargo = new Cargo();
+            if (decoded.cargo) {
+                cargo.nomeCargo = decoded.cargo.nomeCargo;
+                cargo.idCargo = decoded.cargo.idCargo;
+            }
+
+            const funcionario = new Funcionario();
+            funcionario.idFuncionario = decoded.idFuncionario;
+            funcionario.email = decoded.email;
+            funcionario.nomeFuncionario = decoded.nomeFuncionario || '';
+            funcionario.cargo = cargo;
+
+            return funcionario;
+        } catch (err) {
+            if (err instanceof jwt.TokenExpiredError) {
+                console.error("Token expirado");
+            } else if (err instanceof jwt.JsonWebTokenError) {
+                console.error("Token inválido");
+            } else {
+                console.error("Erro geral", err);
+            }
+            return null;
+        }
+    };
+
+    get key(): string { return this._key; }
+    set key(value: string) { this._key = value; }
+    get alg(): string { return this._alg; }
+    set alg(value: string) { this._alg = value; }
+    get type(): string { return this._type; }
+    set type(value: string) { this._type = value; }
+    get iss(): string { return this._iss; }
+    set iss(value: string) { this._iss = value; }
+    get aud(): string { return this._aud; }
+    set aud(value: string) { this._aud = value; }
+    get sub(): string { return this._sub; }
+    set sub(value: string) { this._sub = value; }
+    get duracaoToken(): number { return this._duracaoToken; }
+    set duracaoToken(value: number) { this._duracaoToken = value; }
+}
+
+--------------------------------------------------------------------------------
+ARQUIVO: http\StandardResponse.ts
+--------------------------------------------------------------------------------
+/**
+ * Classe padrão para respostas da API.
+ * Unifica o formato de respostas de sucesso e erro.
+ */
+export class StandardResponse {
+    private _success: boolean;
+    private _message: string;
+    private _data: any;
+    private _error: any;
+    private _httpCode: number;
+
+    private constructor(
+        success: boolean,
+        httpCode: number,
+        message: string,
+        data: any = null,
+        error: any = null
+    ) {
+        this._success = success;
+        this._httpCode = httpCode;
+        this._message = message;
+        this._data = data;
+        this._error = error;
+    }
+
+    get success(): boolean { return this._success; }
+    get httpCode(): number { return this._httpCode; }
+    get message(): string { return this._message; }
+    get data(): any { return this._data; }
+    get error(): any { return this._error; }
+
+    public toJSON() {
+        const response: any = { success: this._success, message: this._message };
+        if (this._data !== null) response.data = this._data;
+        if (this._error !== null) response.error = this._error;
+        return response;
+    }
+
+    /**
+     * Envia a resposta HTTP. Para 204 (No Content), não envia body.
+     */
+    public send(res: any) {
+        if (this._httpCode === 204) {
+            return res.status(204).end();
+        }
+        return res.status(this._httpCode).json(this.toJSON());
+    }
+
+    static success(message: string, data: any = null, httpCode: number = 200): StandardResponse {
+        return new StandardResponse(true, httpCode, message, data, null);
+    }
+
+    static error(message: string, error: any = null, httpCode: number = 400): StandardResponse {
+        return new StandardResponse(false, httpCode, message, null, error);
+    }
+
+    static created(message: string, data: any = null): StandardResponse {
+        return StandardResponse.success(message, data, 201);
+    }
+
+    static noContent(): StandardResponse {
+        return new StandardResponse(true, 204, "", null, null);
+    }
+
+    static notFound(message: string = "Recurso não encontrado", error: any = null): StandardResponse {
+        return StandardResponse.error(message, error, 404);
+    }
+
+    static unauthorized(message: string = "Não autorizado", error: any = null): StandardResponse {
+        return StandardResponse.error(message, error, 401);
+    }
+
+    static forbidden(message: string = "Acesso negado", error: any = null): StandardResponse {
+        return StandardResponse.error(message, error, 403);
+    }
+
+    static internalError(message: string = "Erro interno do servidor", error: any = null): StandardResponse {
+        return StandardResponse.error(message, error, 500);
+    }
+}
+
+--------------------------------------------------------------------------------
+ARQUIVO: index.ts
+--------------------------------------------------------------------------------
+// ============================================================================
+// src/index.ts
+// PONTO DE ENTRADA DA APLICAÇÃO
+// ============================================================================
+
+// Carrega as variáveis de ambiente do arquivo .env antes de qualquer outro módulo
+import dotenv from 'dotenv';
+dotenv.config(); // Deve ser o primeiro comando para garantir que process.env esteja populado
+
+// Importa a classe principal do servidor (depende de process.env)
+import { Server } from "./Server";
+
+/**
+ * Função assíncrona que inicializa e inicia o servidor.
+ * 
+ * Este é o ponto de entrada da aplicação. Ela:
+ * 1. Define a porta com base na variável de ambiente PORT ou fallback para 3000.
+ * 2. Instancia o servidor com a porta definida.
+ * 3. Aguarda a inicialização completa do servidor (conexão com banco, middlewares, rotas).
+ * 4. Inicia a escuta HTTP.
+ * 
+ * Caso ocorra qualquer erro durante a inicialização, a função captura a exceção,
+ * exibe uma mensagem no console e encerra o processo com código de erro (1).
+ * 
+ * @example
+ * // Execução padrão
+ * await startServer();
+ * 
+ * @returns {Promise<void>} Não retorna valor.
+ * 
+ * @throws {Error} Em caso de falha na inicialização, o processo é encerrado.
+ */
+const startServer = async (): Promise<void> => {
+    try {
+        // Define a porta: prioriza a variável de ambiente PORT, senão usa 3000
+        // Garante que PORT seja um number (ou fallback para 3000 se inválido)
+        const rawPort = process.env.PORT;
+        const parsedPort = rawPort ? parseInt(rawPort, 10) : NaN;
+        const PORT: number = !Number.isNaN(parsedPort) ? parsedPort : 3000;
+
+        // Instancia o servidor com a porta configurada
+        const server = new Server(PORT);
+
+        // Inicializa o servidor (conecta ao banco, configura middlewares, rotas, etc.)
+        await server.init();
+
+        // Inicia o servidor HTTP na porta definida
+        server.run();
+    } catch (error) {
+        // Em caso de erro, exibe mensagem e encerra o processo
+        console.error("❌ Falha ao iniciar o servidor:", error);
+        process.exit(1); // Código 1 indica erro
+    }
+};
+
+// Executa a função de inicialização (top-level await em módulos ES é permitido)
+startServer();
+
+--------------------------------------------------------------------------------
+ARQUIVO: middlewares\JwtMiddleware.ts
+--------------------------------------------------------------------------------
+import { Request, Response, NextFunction } from 'express';
+import { MeuTokenJWT } from '../http/MeuTokenJWT';
+import { ErrorResponse } from '../http/ErrorResponse';
+import { Funcionario } from '../models/Funcionario';
+
+
+/**
+ * Middleware para validação de tokens JWT em requisições.
+ * 
+ * Este middleware intercepta requisições, extrai o token do header `Authorization`,
+ * valida-o e, se válido, injeta o objeto `Funcionario` decodificado na requisição
+ * para uso em controllers e serviços subsequentes.
+ * 
+ * @example
+ * // Uso em uma rota
+ * router.get("/protegido", jwtMiddleware.validateToken, (req, res) => {
+ *   const funcionario = req.funcionarioLogado;
+ *   // ... lógica protegida
+ * });
+ * 
+ * @example
+ * // Lançando erro caso o token seja inválido
+ * // O erro será capturado pelo middleware global de erros
+ */
+export class JwtMiddleware {
+    /**
+     * Valida o token JWT presente no header `Authorization` da requisição.
+     * 
+     * Fluxo:
+     * 1. Obtém o header `authorization` da requisição.
+     * 2. Instancia a classe `MeuTokenJWT`.
+     * 3. Valida e decodifica o token usando `MeuTokenJWT.validarToken()`.
+     * 4. Se o token for válido:
+     *    - Injeta o objeto `Funcionario` na propriedade `funcionarioLogado` da requisição.
+     *    - Chama `next()` para prosseguir ao próximo middleware/controller.
+     * 5. Se o token for inválido ou não fornecido:
+     *    - Lança um `ErrorResponse` com status 401 (Unauthorized).
+     * 
+     * @param {Request} request - Objeto de requisição do Express.
+     * @param {Response} _response - Objeto de resposta do Express (não utilizado).
+     * @param {NextFunction} next - Função para passar o controle ao próximo middleware.
+     * @throws {ErrorResponse} Lança erro 401 se o token for inválido ou ausente.
+     * 
+     * @example
+     * // Middleware aplicado a uma rota
+     * app.get("/perfil", jwtMiddleware.validateToken, perfilController);
+     */
+    public validateToken = (request: Request, _response: Response, next: NextFunction): void => {
+        console.log("🔷 JwtMiddleware.validateToken()");
+        const authorization = request.headers.authorization;
+
+        const jwt = new MeuTokenJWT();
+        const funcionario: Funcionario | null = jwt.validarToken(authorization as string);
+
+        if (funcionario) {
+            // Injeta o funcionário decodificado na requisição para uso posterior
+            (request as any).funcionarioLogado = funcionario;
+            next();
+        } else {
+            throw new ErrorResponse(401, "Token inválido");
+        }
+    };
+}
+
+--------------------------------------------------------------------------------
+ARQUIVO: models\Cargo.ts
+--------------------------------------------------------------------------------
+import { ObjectId } from "mongodb";
+
+/**
+ * Representa a entidade Cargo do sistema.
+ * 
+ * Encapsula os dados de um cargo, garantindo a integridade dos atributos
+ * por meio de validações nos setters:
+ * - `idCargo`: deve ser um ObjectId válido do MongoDB (24 caracteres hexadecimais).
+ * - `nomeCargo`: deve ser uma string não vazia com pelo menos 3 caracteres e no máximo 64.
+ * 
+ * @example
+ * // Criar uma instância e definir valores válidos
+ * const cargo = new Cargo();
+ * cargo.idCargo = "507f1f77bcf86cd799439011";
+ * cargo.nomeCargo = "Administrador";
+ * 
+ * @example
+ * // Serialização para JSON (usando o método toJSON)
+ * console.log(JSON.stringify(cargo));
+ * // Saída: {"idCargo":"507f1f77bcf86cd799439011","nomeCargo":"Administrador"}
+ */
+export class Cargo {
+    private _idCargo: string = '';
+    private _nomeCargo: string = '';
+
+    /**
+     * Construtor da classe Cargo.
+     * 
+     * Inicializa uma nova instância de Cargo com valores padrão vazios.
+     * Os valores devem ser definidos posteriormente através dos setters.
+     * 
+     * @example
+     * const cargo = new Cargo();
+     */
+    constructor() {
+        console.log("⬆️  Cargo.constructor()");
+    }
+
+    /**
+     * Obtém o identificador único do cargo.
+     * 
+     * @returns {string} ID do cargo (string hex do ObjectId).
+     */
+    get idCargo(): string {
+        return this._idCargo;
+    }
+
+    /**
+     * Define o identificador único do cargo.
+     * 
+     * 🔹 Regra de domínio: deve ser um ObjectId válido do MongoDB.
+     * 
+     * @param {string} value - ID do cargo no formato hexadecimal de 24 caracteres.
+     * @throws {Error} Lança erro se o valor for vazio, nulo ou não for um ObjectId válido.
+     * 
+     * @example
+     * cargo.idCargo = "507f1f77bcf86cd799439011"; // ✅ válido
+     * cargo.idCargo = "123";                       // ❌ lança erro
+     * cargo.idCargo = "";                          // ❌ lança erro
+     */
+    set idCargo(value: string) {
+        if (!value) {
+            throw new Error("idCargo é obrigatório.");
+        }
+        if (!ObjectId.isValid(value)) {
+            throw new Error(`idCargo inválido: "${value}". Deve ser um ObjectId de 24 caracteres hexadecimais.`);
+        }
+        this._idCargo = value;
+    }
+
+    /**
+     * Obtém o nome do cargo.
+     * 
+     * @returns {string} Nome do cargo.
+     */
+    get nomeCargo(): string {
+        return this._nomeCargo;
+    }
+
+    /**
+     * Define o nome do cargo.
+     * 
+     * 🔹 Regra de domínio:
+     * - Deve ser uma string não vazia.
+     * - Deve ter pelo menos 3 caracteres.
+     * - Deve ter no máximo 64 caracteres.
+     * - Espaços em branco no início/fim são removidos automaticamente.
+     * 
+     * @param {string} value - Nome do cargo.
+     * @throws {Error} Lança erro se não for string, estiver vazio ou não atender ao tamanho mínimo/máximo.
+     * 
+     * @example
+     * cargo.nomeCargo = "Gerente";      // ✅ válido
+     * cargo.nomeCargo = "  Analista  "; // ✅ válido (trim será aplicado)
+     * cargo.nomeCargo = "AB";           // ❌ lança erro (menos de 3 caracteres)
+     * cargo.nomeCargo = null;           // ❌ lança erro
+     */
+    set nomeCargo(value: string) {
+        if (typeof value !== "string") {
+            throw new Error("nomeCargo deve ser uma string.");
+        }
+        const nome = value.trim();
+        if (nome.length < 3) {
+            throw new Error("nomeCargo deve ter pelo menos 3 caracteres.");
+        }
+        if (nome.length > 64) {
+            throw new Error("nomeCargo deve ter no máximo 64 caracteres.");
+        }
+        this._nomeCargo = nome;
+    }
+
+    /**
+     * Controla a serialização da instância para JSON.
+     * 
+     * Remove os underlines dos campos privados, retornando um objeto
+     * com as chaves `idCargo` e `nomeCargo`.
+     * 
+     * Este método é chamado automaticamente pelo `JSON.stringify()`.
+     * 
+     * @returns {Object} Objeto com os campos públicos para serialização.
+     * 
+     * @example
+     * const cargo = new Cargo();
+     * cargo.idCargo = "507f1f77bcf86cd799439011";
+     * cargo.nomeCargo = "Administrador";
+     * console.log(JSON.stringify(cargo));
+     * // Saída: {"idCargo":"507f1f77bcf86cd799439011","nomeCargo":"Administrador"}
+     */
+    toJSON() {
+        return {
+            idCargo: this._idCargo,
+            nomeCargo: this._nomeCargo
+        };
+    }
+}
+
+--------------------------------------------------------------------------------
+ARQUIVO: models\Funcionario.ts
+--------------------------------------------------------------------------------
+import { ObjectId } from "mongodb";
+import { Cargo } from "./Cargo";
+
+/**
+ * Representa a entidade Funcionario do sistema.
+ * 
+ * Objetivo:
+ * - Encapsular os dados de um funcionário.
+ * - Garantir integridade dos atributos via getters e setters.
+ * - Associar corretamente um funcionário a um Cargo.
+ * 
+ * @example
+ * const funcionario = new Funcionario();
+ * funcionario.nomeFuncionario = "Ana Silva";
+ * funcionario.email = "ana@empresa.com";
+ * funcionario.senha = "Senha@123";
+ * funcionario.recebeValeTransporte = 1;
+ * 
+ * const cargo = new Cargo();
+ * cargo.idCargo = "67a1b2c3d4e5f6789a0b1c2d";
+ * funcionario.cargo = cargo;
+ */
+export class Funcionario {
+    private _idFuncionario: string = '';
+    private _cargo!: Cargo;
+    private _nomeFuncionario: string = '';
+    private _email: string = '';
+    private _senha: string = '';
+    private _recebeValeTransporte: number = 0; // 0 = não, 1 = sim
+
+    /**
+     * Construtor da classe Funcionario.
+     * Inicializa o cargo com uma nova instância de Cargo.
+     */
+    constructor() {
+        this._cargo = new Cargo();
+        console.log("⬆️  Funcionario.constructor()");
+    }
+
+    // ======================== GETTERS E SETTERS ========================
+
+    /**
+     * Retorna o ID do funcionário.
+     * @returns {string} ID no formato hexadecimal (ObjectId).
+     */
+    get idFuncionario(): string {
+        return this._idFuncionario;
+    }
+
+    /**
+     * Define o ID do funcionário.
+     * 
+     * 🔹 Regra de domínio: deve ser um ObjectId válido do MongoDB (24 caracteres hex).
+     * 
+     * @param {string} value - ID do funcionário.
+     * @throws {Error} Se o valor for vazio ou não for um ObjectId válido.
+     * 
+     * @example
+     * funcionario.idFuncionario = "67a1b2c3d4e5f6789a0b1c2d"; // ✅
+     * funcionario.idFuncionario = "123"; // ❌ (lança erro)
+     */
+    set idFuncionario(value: string) {
+        if (!value) {
+            throw new Error("idFuncionario é obrigatório.");
+        }
+        if (!ObjectId.isValid(value)) {
+            throw new Error(`idFuncionario inválido: "${value}". Deve ser um ObjectId de 24 caracteres hexadecimais.`);
+        }
+        this._idFuncionario = value;
+    }
+
+    /**
+     * Retorna o cargo associado ao funcionário.
+     * @returns {Cargo} Instância de Cargo.
+     */
+    get cargo(): Cargo {
+        return this._cargo;
+    }
+
+    /**
+     * Define o cargo do funcionário.
+     * 
+     * 🔹 Regra de domínio: deve ser uma instância de Cargo.
+     * 
+     * @param {Cargo} value - Instância de Cargo.
+     * @throws {Error} Se o valor não for uma instância de Cargo.
+     * 
+     * @example
+     * const cargo = new Cargo();
+     * funcionario.cargo = cargo; // ✅
+     * funcionario.cargo = null;  // ❌
+     */
+    set cargo(value: Cargo) {
+        if (!(value instanceof Cargo)) {
+            throw new Error("cargo deve ser uma instância válida de Cargo.");
+        }
+        this._cargo = value;
+    }
+
+    /**
+     * Retorna o nome do funcionário.
+     * @returns {string} Nome do funcionário.
+     */
+    get nomeFuncionario(): string {
+        return this._nomeFuncionario;
+    }
+
+    /**
+     * Define o nome do funcionário.
+     * 
+     * 🔹 Regra de domínio: deve ser uma string não vazia com pelo menos 3 caracteres.
+     * 
+     * @param {string} value - Nome do funcionário.
+     * @throws {Error} Se não for string ou tiver menos de 3 caracteres.
+     * 
+     * @example
+     * funcionario.nomeFuncionario = "João Silva"; // ✅
+     * funcionario.nomeFuncionario = "Jo"; // ❌ (menos de 3 caracteres)
+     */
+    set nomeFuncionario(value: string) {
+        if (typeof value !== "string") {
+            throw new Error("nomeFuncionario deve ser uma string.");
+        }
+        const nome = value.trim();
+        if (nome.length < 3) {
+            throw new Error("nomeFuncionario deve ter pelo menos 3 caracteres.");
+        }
+        this._nomeFuncionario = nome;
+    }
+
+    /**
+     * Retorna o email do funcionário.
+     * @returns {string} Email.
+     */
+    get email(): string {
+        return this._email;
+    }
+
+    /**
+     * Define o email do funcionário.
+     * 
+     * 🔹 Regra de domínio: deve ser um email válido (formato).
+     * 
+     * @param {string} value - Email do funcionário.
+     * @throws {Error} Se não for string, estiver vazio ou não seguir o formato.
+     * 
+     * @example
+     * funcionario.email = "ana@empresa.com"; // ✅
+     * funcionario.email = "email_invalido"; // ❌
+     */
+    set email(value: string) {
+        if (typeof value !== "string") {
+            throw new Error("email deve ser uma string.");
+        }
+        const emailTrimmed = value.trim();
+        if (emailTrimmed === "") {
+            throw new Error("email não pode ser vazio.");
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(emailTrimmed)) {
+            throw new Error("email em formato inválido.");
+        }
+        this._email = emailTrimmed;
+    }
+
+    /**
+     * Retorna a senha do funcionário.
+     * @returns {string} Senha (pode ser hash).
+     */
+    get senha(): string {
+        return this._senha;
+    }
+
+    /**
+     * Define a senha do funcionário.
+     * 
+     * 🔹 Nota: Este setter não realiza validações para permitir a atribuição
+     * do hash gerado pelo bcrypt. As validações de força da senha devem ser
+     * aplicadas na camada de serviço antes da criptografia.
+     * 
+     * @param {string} value - Senha (texto puro ou hash).
+     * 
+     * @example
+     * // No Service (antes de salvar)
+     * const hash = await bcrypt.hash(senha, 12);
+     * funcionario.senha = hash; // ✅
+     */
+    set senha(value: string) {
+        // Permite atribuição direta (sem validações)
+        this._senha = value;
+    }
+
+    /**
+     * Retorna se o funcionário recebe vale transporte.
+     * @returns {number} 0 = não, 1 = sim.
+     */
+    get recebeValeTransporte(): number {
+        return this._recebeValeTransporte;
+    }
+
+    /**
+     * Define se o funcionário recebe vale transporte.
+     * 
+     * 🔹 Regra de domínio: deve ser 0 ou 1.
+     * 
+     * @param {number} value - 0 ou 1.
+     * @throws {Error} Se o valor não for 0 ou 1.
+     * 
+     * @example
+     * funcionario.recebeValeTransporte = 1; // ✅
+     * funcionario.recebeValeTransporte = 2; // ❌
+     */
+    set recebeValeTransporte(value: number) {
+        if (![0, 1].includes(value)) {
+            throw new Error("recebeValeTransporte deve ser 0 ou 1.");
+        }
+        this._recebeValeTransporte = value;
+    }
+
+    // ======================== SERIALIZAÇÃO ========================
+
+    /**
+     * Controla a serialização para JSON.
+     * 
+     * Remove os underlines dos campos e inclui o cargo serializado.
+     * 
+     * @returns {Object} Objeto com os campos: idFuncionario, nomeFuncionario,
+     *                   email, recebeValeTransporte, cargo (objeto).
+     * 
+     * @example
+     * const json = funcionario.toJSON();
+     * // {
+     * //   idFuncionario: "67a1b2c3d4e5f6789a0b1c2d",
+     * //   nomeFuncionario: "Ana Silva",
+     * //   email: "ana@empresa.com",
+     * //   recebeValeTransporte: 1,
+     * //   cargo: { idCargo: "...", nomeCargo: "..." }
+     * // }
+     */
+    toJSON() {
+        return {
+            idFuncionario: this._idFuncionario,
+            nomeFuncionario: this._nomeFuncionario,
+            email: this._email,
+            recebeValeTransporte: this._recebeValeTransporte,
+            cargo: this._cargo
+        };
+    }
+}
+
+--------------------------------------------------------------------------------
+ARQUIVO: routers\CargoRouter.ts
+--------------------------------------------------------------------------------
+import { Router } from "express";
+import { JwtMiddleware } from "../middlewares/JwtMiddleware";
+import { CargoController } from "../controllers/CargoController";
+import { CargoService } from "../services/CargoService";
+import { CargoDAO } from "../dao/CargoDAO";
+import { FuncionarioDAO } from "../dao/FuncionarioDAO";
+import { MongoDatabase } from "../database/MongoDatabase";
+import { asyncHandler } from "../http/asyncHandler";
+
+export class CargoRouter {
+    public static readonly PREFIX = "/api/v1/cargos";
+
+    private _router: Router;
+
+    constructor() {
+        console.log("⬆️ CargoRouter.constructor()");
+
+        const mainRouter = Router();
+        const subRouter = Router();
+
+        const mongoDB = new MongoDatabase();
+        const cargoDAO = new CargoDAO(mongoDB);
+        const funcionarioDAO = new FuncionarioDAO(mongoDB);
+
+        // ✅ CargoService agora recebe também o FuncionarioDAO
+        const cargoService = new CargoService(cargoDAO, funcionarioDAO);
+        const cargoController = new CargoController(cargoService);
+        const jwtMiddleware = new JwtMiddleware();
+
+        // POST / - Criar um novo cargo
+        subRouter.post(
+            "/",
+            jwtMiddleware.validateToken,
+            asyncHandler(cargoController.create)
+        );
+
+        // GET / - Listar todos os cargos
+        subRouter.get(
+            "/",
+            jwtMiddleware.validateToken,
+            asyncHandler(cargoController.findAll)
+        );
+
+        // GET /count - Obter total de cargos (protegida por JWT)
+        subRouter.get(
+            "/count",
+            jwtMiddleware.validateToken,
+            asyncHandler(cargoController.count)
+        );
+
+        // GET /:idCargo - Buscar cargo por ID
+        subRouter.get(
+            "/:idCargo",
+            jwtMiddleware.validateToken,
+            asyncHandler(cargoController.findById)
+        );
+
+        // PUT /:idCargo - Atualizar cargo por ID
+        subRouter.put(
+            "/:idCargo",
+            jwtMiddleware.validateToken,
+            asyncHandler(cargoController.update)
+        );
+
+        // DELETE /:idCargo - Deletar cargo por ID
+        subRouter.delete(
+            "/:idCargo",
+            jwtMiddleware.validateToken,
+            asyncHandler(cargoController.delete)
+        );
+
+        mainRouter.use(CargoRouter.PREFIX, subRouter);
+        this._router = mainRouter;
+    }
+
+    public getRouter = (): Router => {
+        return this._router;
+    };
+}
+
+--------------------------------------------------------------------------------
+ARQUIVO: routers\FuncionarioRouter.ts
+--------------------------------------------------------------------------------
+import { Router } from "express";
+import { JwtMiddleware } from "../middlewares/JwtMiddleware";
+import { FuncionarioController } from "../controllers/FuncionarioController";
+import { FuncionarioService } from "../services/FuncionarioService";
+import { FuncionarioDAO } from "../dao/FuncionarioDAO";
+import { CargoDAO } from "../dao/CargoDAO";
+import { MongoDatabase } from "../database/MongoDatabase";
+import { asyncHandler } from "../http/asyncHandler";
+
+export class FuncionarioRouter {
+    public static readonly PREFIX = "/api/v1/funcionarios";
+
+    private _router: Router;
+    private _funcionarioService: FuncionarioService;
+
+    constructor() {
+        console.log("⬆️ FuncionarioRouter.constructor()");
+
+        const mainRouter = Router();
+        const subRouter = Router();
+
+        const mongoDB = new MongoDatabase();
+        const funcionarioDAO = new FuncionarioDAO(mongoDB);
+        const cargoDAO = new CargoDAO(mongoDB);
+        this._funcionarioService = new FuncionarioService(funcionarioDAO, cargoDAO);
+        const funcionarioController = new FuncionarioController(this._funcionarioService);
+        const jwtMiddleware = new JwtMiddleware();
+
+        // ======================== ROTAS PÚBLICAS ========================
+        subRouter.post(
+            "/login",
+            asyncHandler(funcionarioController.login)
+        );
+
+        // ======================== ROTAS PROTEGIDAS POR JWT ========================
+        subRouter.post(
+            "/",
+            jwtMiddleware.validateToken,
+            asyncHandler(funcionarioController.create)
+        );
+
+        subRouter.get(
+            "/",
+            jwtMiddleware.validateToken,
+            asyncHandler(funcionarioController.findAll)
+        );
+
+        subRouter.get(
+            "/count",
+            jwtMiddleware.validateToken,
+            asyncHandler(funcionarioController.count)
+        );
+
+        subRouter.get(
+            "/count/:idCargo",
+            jwtMiddleware.validateToken,
+            asyncHandler(funcionarioController.countByCargoId)
+        );
+
+        subRouter.get(
+            "/:idFuncionario",
+            jwtMiddleware.validateToken,
+            asyncHandler(funcionarioController.findById)
+        );
+
+        subRouter.put(
+            "/:idFuncionario",
+            jwtMiddleware.validateToken,
+            asyncHandler(funcionarioController.update)
+        );
+
+        subRouter.delete(
+            "/:idFuncionario",
+            jwtMiddleware.validateToken,
+            asyncHandler(funcionarioController.delete)
+        );
+
+        mainRouter.use(FuncionarioRouter.PREFIX, subRouter);
+        this._router = mainRouter;
+    }
+
+    public getRouter = (): Router => {
+        return this._router;
+    };
+
+    /** Exposto para o Server chamar initializeDefaultAdmin() no bootstrap. */
+    public getService = (): FuncionarioService => {
+        return this._funcionarioService;
+    };
+}
+
+--------------------------------------------------------------------------------
+ARQUIVO: Server.ts
+--------------------------------------------------------------------------------
+import express, { Express, Request, Response, NextFunction } from "express";
+import cors from "cors";
+import path from "path";
+
+import { CargoRouter } from "./routers/CargoRouter";
+import { FuncionarioRouter } from "./routers/FuncionarioRouter";
+import { ErrorResponse } from "./http/ErrorResponse";
+import { StandardResponse } from "./http/StandardResponse";
+
+export class Server {
+    private _porta: number;
+    private _app: Express;
+
+    private _cargoRouter: CargoRouter;
+    private _funcionarioRouter: FuncionarioRouter;
+
+    constructor(porta: number) {
+        console.log("⬆️ Server.constructor()");
+        this._porta = porta;
+        this._app = express();
+
+        this._cargoRouter = new CargoRouter();
+        this._funcionarioRouter = new FuncionarioRouter();
+    }
+
+    async init(): Promise<void> {
+        console.log("⬆️ Server.init()");
+
+        // Cria o administrador padrão ANTES de expor as rotas (idempotente).
+        try {
+            await this._funcionarioRouter.getService().initializeDefaultAdmin();
+        } catch (err) {
+            console.error("❌ Falha ao inicializar administrador padrão:", err);
+            // Não encerra a aplicação; apenas loga.
+        }
+
+        this._app.use(cors({ origin: "*" }));
+        this._app.use(express.json());
+
+        // Em dev: __dirname = src/. Após build: __dirname = dist/.
+        // Garanta que "public" seja copiado para "dist/public" no build.
+        const publicDir = path.resolve(__dirname, "public");
+        this._app.use(express.static(publicDir));
+
+        // Rotas da API (os routers já contêm seus prefixos internos)
+        this._app.use(this._cargoRouter.getRouter());
+        this._app.use(this._funcionarioRouter.getRouter());
+
+        // 404 para rotas não mapeadas (antes do middleware de erro)
+        this._app.use((_req: Request, res: Response) => {
+            StandardResponse.notFound("Rota não encontrada").send(res);
+        });
+
+        this.setupErrorMiddleware();
+    }
+
+    private setupErrorMiddleware(): void {
+        this._app.use((error: any, _req: Request, res: Response, _next: NextFunction) => {
+            console.error("❌ Erro capturado:", error);
+
+            if (error instanceof ErrorResponse) {
+                return StandardResponse.error(error.message, error.error, error.httpCode).send(res);
+            }
+
+            return StandardResponse.internalError("Erro interno do servidor", {
+                message: error?.message || "Erro interno"
+            }).send(res);
+        });
+    }
+
+    run(): void {
+        this._app.listen(this._porta)
+            .on('error', (err) => {
+                console.error(`❌ Erro ao iniciar servidor na porta ${this._porta}:`, err);
+                process.exit(1);
+            })
+            .on('listening', () => {
+                console.log(`🚀 Server rodando em http://localhost:${this._porta}/login.html`);
+            });
+    }
+}
+
+--------------------------------------------------------------------------------
+ARQUIVO: services\CargoService.ts
+--------------------------------------------------------------------------------
+import { CargoDAO } from "../dao/CargoDAO";
+import { FuncionarioDAO } from "../dao/FuncionarioDAO";
+import { Cargo } from "../models/Cargo";
+import { ErrorResponse } from "../http/ErrorResponse";
+import { Funcionario } from "../models/Funcionario";
+
+export class CargoService {
+    private _cargoDAO: CargoDAO;
+    private _funcionarioDAO: FuncionarioDAO;
+
+    // ✅ Agora recebe FuncionarioDAO (para integridade referencial no delete)
+    constructor(cargoDAODependency: CargoDAO, funcionarioDAODependency: FuncionarioDAO) {
+        console.log("⬆️  CargoService.constructor()");
+        this._cargoDAO = cargoDAODependency;
+        this._funcionarioDAO = funcionarioDAODependency;
+    }
+
+    private isAdmin(funcionario: Funcionario): boolean {
+        return funcionario.cargo?.nomeCargo === "Administrador";
+    }
+
+    public create = async (cargo: Cargo, funcionarioLogado: Funcionario): Promise<Cargo> => {
+        console.log("🟣 CargoService.create()");
+
+        if (!this.isAdmin(funcionarioLogado)) {
+            throw new ErrorResponse(403, "Não autorizado", {
+                message: `O cargo "${funcionarioLogado.cargo?.nomeCargo ?? 'desconhecido'}" não é autorizado a criar cargos.`
+            });
+        }
+
+        const resultado = await this._cargoDAO.findByField("nomeCargo", cargo.nomeCargo);
+        if (resultado.length > 0) {
+            throw new ErrorResponse(400, "Cargo já existe", {
+                message: `O cargo "${cargo.nomeCargo}" já existe.`
+            });
+        }
+
+        try {
+            return await this._cargoDAO.create(cargo);
+        } catch (err: any) {
+            if (err?.code === 11000) {
+                throw new ErrorResponse(400, "Cargo já existe", {
+                    message: `O cargo "${cargo.nomeCargo}" já existe.`
+                });
+            }
+            throw err;
+        }
+    };
+
+    public findAll = async (_funcionarioLogado: Funcionario): Promise<Cargo[]> => {
+        console.log("🟣 CargoService.findAll()");
+        return await this._cargoDAO.findAll();
+    };
+
+    public findById = async (idCargo: string, _funcionarioLogado: Funcionario): Promise<Cargo | null> => {
+        console.log("🟣 CargoService.findById()");
+        const cargo = new Cargo();
+        cargo.idCargo = idCargo;
+        return await this._cargoDAO.findById(cargo.idCargo);
+    };
+
+    public update = async (cargo: Cargo, funcionarioLogado: Funcionario): Promise<boolean> => {
+        console.log("🟣 CargoService.update()");
+
+        if (!this.isAdmin(funcionarioLogado)) {
+            throw new ErrorResponse(403, "Não autorizado", {
+                message: `O cargo "${funcionarioLogado.cargo?.nomeCargo ?? 'desconhecido'}" não é autorizado a atualizar cargos.`
+            });
+        }
+
+        // Verifica duplicidade case-insensitive (exceto o próprio registro)
+        const duplicados = await this._cargoDAO.findByField("nomeCargo", cargo.nomeCargo);
+        const duplicadoDeOutro = duplicados.some(c => c.idCargo !== cargo.idCargo);
+        if (duplicadoDeOutro) {
+            throw new ErrorResponse(400, "Cargo já existe", {
+                message: `O cargo "${cargo.nomeCargo}" já existe.`
+            });
+        }
+
+        try {
+            return await this._cargoDAO.update(cargo);
+        } catch (err: any) {
+            if (err?.code === 11000) {
+                throw new ErrorResponse(400, "Cargo já existe", {
+                    message: `O cargo "${cargo.nomeCargo}" já existe.`
+                });
+            }
+            throw err;
+        }
+    };
+
+    public delete = async (cargo: Cargo, funcionarioLogado: Funcionario): Promise<boolean> => {
+        console.log("🟣 CargoService.delete()");
+
+        if (!this.isAdmin(funcionarioLogado)) {
+            throw new ErrorResponse(403, "Não autorizado", {
+                message: `O cargo "${funcionarioLogado.cargo?.nomeCargo ?? 'desconhecido'}" não é autorizado a excluir cargos.`
+            });
+        }
+
+        // ✅ Integridade referencial: não permite excluir cargo com funcionários
+        const total = await this._funcionarioDAO.countByCargoId(cargo.idCargo);
+        if (total > 0) {
+            throw new ErrorResponse(400, "Não é possível excluir o cargo", {
+                message: `Existem ${total} funcionário(s) vinculados a este cargo. Reatribua-os antes de excluir.`
+            });
+        }
+
+        return await this._cargoDAO.delete(cargo);
+    };
+
+    public count = async (_funcionarioLogado: Funcionario): Promise<number> => {
+        console.log("🟣 CargoService.count()");
+        return await this._cargoDAO.count();
+    };
+}
+
+--------------------------------------------------------------------------------
+ARQUIVO: services\FuncionarioService.ts
+--------------------------------------------------------------------------------
+import bcrypt from "bcrypt";
+import { CargoDAO } from "../dao/CargoDAO";
+import { FuncionarioDAO } from "../dao/FuncionarioDAO";
+import { Cargo } from "../models/Cargo";
+import { Funcionario } from "../models/Funcionario";
+import { ErrorResponse } from "../http/ErrorResponse";
+import { MeuTokenJWT } from "../http/MeuTokenJWT";
+
+export class FuncionarioService {
+    private _funcionarioDAO: FuncionarioDAO;
+    private _cargoDAO: CargoDAO;
+
+    constructor(funcionarioDAODependency: FuncionarioDAO, cargoDAODependency: CargoDAO) {
+        console.log("⬆️  FuncionarioService.constructor()");
+        this._funcionarioDAO = funcionarioDAODependency;
+        this._cargoDAO = cargoDAODependency;
+        // ⚠️ initializeDefaultAdmin() NÃO é mais chamado aqui.
+        // Deve ser aguardado no bootstrap (Server.init()).
+    }
+
+    /**
+     * Cria o administrador padrão se não houver nenhum funcionário cadastrado.
+     * Idempotente. Chamado (com await) no bootstrap.
+     */
+    public initializeDefaultAdmin = async (): Promise<Funcionario | void> => {
+        console.log("🟣 FuncionarioService.initializeDefaultAdmin()");
+
+        const total = await this._funcionarioDAO.count();
+        if (total > 0) {
+            console.log("✅ Já existem funcionários cadastrados. Pulando criação do admin padrão.");
+            return;
+        }
+
+        const cargoAdmin = await this._cargoDAO.findByField("nomeCargo", "Administrador");
+        let cargoId: string;
+        if (cargoAdmin && cargoAdmin.length > 0) {
+            cargoId = cargoAdmin[0].idCargo;
+            console.log(`🔍 Cargo "Administrador" encontrado com ID: ${cargoId}`);
+        } else {
+            const cargo = new Cargo();
+            cargo.nomeCargo = "Administrador";
+            const cargoCriado = await this._cargoDAO.create(cargo);
+            cargoId = cargoCriado.idCargo;
+            console.log(`🆕 Cargo "Administrador" criado com ID: ${cargoId}`);
+        }
+
+        const adminName = process.env.DEFAULT_ADMIN_NAME || "Hélio Esperidião";
+        const adminEmail = process.env.DEFAULT_ADMIN_EMAIL || "helioesperidiao@gmail.com";
+        const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD || "@Helio123456";
+        const adminValeTransporte = parseInt(process.env.DEFAULT_ADMIN_VALE_TRANSPORTE || "0");
+
+        const funcionarioAdmin = new Funcionario();
+        funcionarioAdmin.nomeFuncionario = adminName;
+        funcionarioAdmin.email = adminEmail;
+        funcionarioAdmin.senha = await bcrypt.hash(adminPassword, 12);
+        funcionarioAdmin.recebeValeTransporte = adminValeTransporte;
+
+        const cargo = new Cargo();
+        cargo.idCargo = cargoId;
+        funcionarioAdmin.cargo = cargo;
+
+        const novoAdmin = await this._funcionarioDAO.create(funcionarioAdmin);
+        console.log(`✅ Administrador padrão criado com ID: ${novoAdmin.idFuncionario}`);
+        return novoAdmin;
+    };
+
+    public create = async (funcionario: Funcionario, funcionarioLogado: Funcionario): Promise<Funcionario> => {
+        console.log("🟣 FuncionarioService.create()");
+
+        // ✅ Apenas administradores podem criar funcionários
+        if (funcionarioLogado.cargo?.nomeCargo !== "Administrador") {
+            throw new ErrorResponse(403, "Não autorizado", {
+                message: `O cargo "${funcionarioLogado.cargo?.nomeCargo ?? 'desconhecido'}" não é autorizado a criar funcionários.`
+            });
+        }
+
+        if (!funcionario.senha || funcionario.senha.trim() === "") {
+            throw new ErrorResponse(400, "Senha é obrigatória");
+        }
+
+        const cargoExiste = await this._cargoDAO.findByField("_id", funcionario.cargo.idCargo);
+        if (!cargoExiste || cargoExiste.length === 0) {
+            throw new ErrorResponse(400, "O cargo informado não existe");
+        }
+
+        const emailExiste = await this._funcionarioDAO.findByField("email", funcionario.email);
+        if (emailExiste && emailExiste.length > 0) {
+            throw new ErrorResponse(400, "Já existe um funcionário com este email");
+        }
+
+        funcionario.senha = await bcrypt.hash(funcionario.senha, 12);
+
+        try {
+            return await this._funcionarioDAO.create(funcionario);
+        } catch (err: any) {
+            // ✅ Traduz violação do índice único em 400
+            if (err?.code === 11000) {
+                throw new ErrorResponse(400, "Já existe um funcionário com este email");
+            }
+            throw err;
+        }
+    };
+
+    public loginFuncionario = async (funcionario: Funcionario): Promise<{ user: Funcionario; token: string }> => {
+        console.log("🟣 FuncionarioService.loginFuncionario()");
+
+        const funcionarioBanco = await this._funcionarioDAO.findByEmail(funcionario.email);
+        if (!funcionarioBanco) {
+            throw new ErrorResponse(401, "Usuário ou senha inválidos");
+        }
+
+        const senhaValida = await bcrypt.compare(funcionario.senha, funcionarioBanco.senha);
+        if (!senhaValida) {
+            throw new ErrorResponse(401, "Usuário ou senha inválidos");
+        }
+
+        const jwt = new MeuTokenJWT();
+        const token = jwt.gerarToken(funcionarioBanco);
+        return { user: funcionarioBanco, token };
+    };
+
+    public findAll = async (_funcionarioLogado: Funcionario): Promise<Funcionario[]> => {
+        console.log("🟣 FuncionarioService.findAll()");
+        return await this._funcionarioDAO.findAll();
+    };
+
+    public findById = async (idFuncionario: string, _funcionarioLogado: Funcionario): Promise<Funcionario> => {
+        const funcionario = await this._funcionarioDAO.findById(idFuncionario);
+        if (!funcionario) {
+            throw new ErrorResponse(404, "Funcionário não encontrado");
+        }
+        return funcionario;
+    };
+
+    public updateFuncionario = async (funcionario: Funcionario, _funcionarioLogado: Funcionario): Promise<boolean> => {
+        console.log(`🟣 FuncionarioService.updateFuncionario(${funcionario.idFuncionario})`);
+
+        // ✅ Hash da nova senha, se enviada em texto plano
+        if (funcionario.senha && funcionario.senha.trim() !== "") {
+            const isBcryptHash = /^\$2[aby]\$\d{2}\$/.test(funcionario.senha);
+            if (!isBcryptHash) {
+                funcionario.senha = await bcrypt.hash(funcionario.senha, 12);
+            }
+        }
+
+        if (funcionario.email) {
+            const emailExiste = await this._funcionarioDAO.findByField("email", funcionario.email);
+            if (emailExiste && emailExiste.length > 0 && emailExiste[0].idFuncionario !== funcionario.idFuncionario) {
+                throw new ErrorResponse(400, "Já existe um funcionário com este email");
+            }
+        }
+
+        if (funcionario.cargo?.idCargo) {
+            const cargoExiste = await this._cargoDAO.findByField("_id", funcionario.cargo.idCargo);
+            if (!cargoExiste || cargoExiste.length === 0) {
+                throw new ErrorResponse(400, "O cargo informado não existe");
+            }
+        }
+
+        try {
+            return await this._funcionarioDAO.update(funcionario);
+        } catch (err: any) {
+            if (err?.code === 11000) {
+                throw new ErrorResponse(400, "Já existe um funcionário com este email");
+            }
+            throw err;
+        }
+    };
+
+    public deleteFuncionario = async (funcionario: Funcionario, _funcionarioLogado: Funcionario): Promise<boolean> => {
+        return await this._funcionarioDAO.delete(funcionario);
+    };
+
+    public count = async (_funcionarioLogado: Funcionario): Promise<number> => {
+        console.log("🟣 FuncionarioService.count()");
+        return await this._funcionarioDAO.count();
+    };
+
+    public countByCargoId = async (cargoId: string, _funcionarioLogado: Funcionario): Promise<number> => {
+        console.log(`🟣 FuncionarioService.countByCargoId(${cargoId})`);
+        return await this._funcionarioDAO.countByCargoId(cargoId);
+    };
+}

@@ -1,195 +1,126 @@
 import { Collection, ObjectId, Filter, UpdateFilter, Document, OptionalId } from "mongodb";
 import { Cargo } from "../models/Cargo";
 import { MongoDatabase } from "../database/MongoDatabase";
+import { createLogger } from "../logging/Logger";
 
-/**
- * Data Access Object para a entidade Cargo.
- * 
- * Responsável por todas as operações de banco de dados relacionadas a cargos,
- * utilizando MongoDB como storage.
- * 
- * @example
- * const cargoDAO = new CargoDAO(mongoDatabase);
- * const novoCargo = await cargoDAO.create(cargo);
- */
+const log = createLogger("CargoDAO");
+
 export class CargoDAO {
     private _database: MongoDatabase;
+    private _indexesPromise: Promise<void> | null = null;
 
-    /**
-     * Construtor do CargoDAO.
-     * @param dbInstance - Instância do MongoDatabase para acesso ao banco.
-     */
     constructor(dbInstance: MongoDatabase) {
-        console.log("⬆️ CargoDAO.constructor()");
         this._database = dbInstance;
     }
 
-    /**
-     * Obtém a coleção "cargo" do banco de dados.
-     * @returns Promise com a coleção MongoDB.
-     */
-    private async getCollection(): Promise<Collection<Document>> {
-        const db = await this._database.getDb();
-        return db.collection("cargo");
+    private async ensureIndexes(collection: Collection<Document>): Promise<void> {
+        if (!this._indexesPromise) {
+            this._indexesPromise = (async () => {
+                try {
+                    await collection.createIndex(
+                        { nomeCargo: 1 },
+                        {
+                            unique: true,
+                            name: "nomeCargo_unique_ci",
+                            collation: { locale: "pt", strength: 2 }
+                        }
+                    );
+                } catch (err: any) {
+                    log.warn("índice único de nomeCargo não criado", { error: err?.message });
+                }
+            })();
+        }
+        return this._indexesPromise;
     }
 
-    /**
-     * Insere um novo cargo no banco de dados.
-     * 
-     * @param cargo - Instância de Cargo a ser inserida (deve ter nomeCargo preenchido).
-     * @returns O mesmo objeto Cargo com o idCargo preenchido pelo MongoDB.
-     * @throws {Error} Se a inserção falhar.
-     * 
-     * @example
-     * const cargo = new Cargo();
-     * cargo.nomeCargo = "Analista";
-     * const cargoCriado = await cargoDAO.create(cargo);
-     * console.log(cargoCriado.idCargo);
-     */
+    private async getCollection(): Promise<Collection<Document>> {
+        const db = await this._database.getDb();
+        const col = db.collection("cargo");
+        await this.ensureIndexes(col);
+        return col;
+    }
+
+    private escapeRegex(text: string): string {
+        return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
     public async create(cargo: Cargo): Promise<Cargo> {
-        console.log("🟢 CargoDAO.create()");
+        log.debug("create()", { nomeCargo: cargo.nomeCargo });
         const collection = await this.getCollection();
-        const doc: OptionalId<Document> = {
-            nomeCargo: cargo.nomeCargo,
-        };
+        const doc: OptionalId<Document> = { nomeCargo: cargo.nomeCargo };
         const result = await collection.insertOne(doc);
         if (!result.insertedId) {
             throw new Error("Falha ao inserir cargo");
         }
-
         cargo.idCargo = result.insertedId.toString();
-
+        log.info("cargo inserido", { idCargo: cargo.idCargo, nomeCargo: cargo.nomeCargo });
         return cargo;
     }
 
-    /**
-     * Remove um cargo do banco de dados pelo ID.
-     * 
-     * @param objCargoModel - Objeto Cargo contendo o idCargo a ser removido.
-     * @returns `true` se um documento foi deletado, `false` caso contrário.
-     * 
-     * @example
-     * const cargo = new Cargo();
-     * cargo.idCargo = "67a1b2c3d4e5f6a7b8c9d0e1";
-     * const removido = await cargoDAO.delete(cargo);
-     */
     public async delete(objCargoModel: Cargo): Promise<boolean> {
-        console.log("🟢 CargoDAO.delete(" + objCargoModel.idCargo + ")");
+        log.debug("delete()", { idCargo: objCargoModel.idCargo });
         const collection = await this.getCollection();
         const filter: Filter<Document> = { _id: new ObjectId(objCargoModel.idCargo) };
         const result = await collection.deleteOne(filter);
-        return result.deletedCount > 0;
+        const ok = result.deletedCount > 0;
+        if (ok) log.info("cargo removido", { idCargo: objCargoModel.idCargo });
+        else log.warn("cargo não encontrado para remoção", { idCargo: objCargoModel.idCargo });
+        return ok;
     }
 
-    /**
-     * Atualiza os dados de um cargo existente.
-     * 
-     * @param objCargoModel - Objeto Cargo com o idCargo e os novos dados (nomeCargo).
-     * @returns `true` se o documento foi atualizado, `false` caso contrário.
-     * 
-     * @example
-     * const cargo = new Cargo();
-     * cargo.idCargo = "67a1b2c3d4e5f6a7b8c9d0e1";
-     * cargo.nomeCargo = "Gerente Sênior";
-     * const atualizado = await cargoDAO.update(cargo);
-     */
     public async update(objCargoModel: Cargo): Promise<boolean> {
-        console.log("🟢 CargoDAO.update()");
+        log.debug("update()", { idCargo: objCargoModel.idCargo });
         const collection = await this.getCollection();
         const filter: Filter<Document> = { _id: new ObjectId(objCargoModel.idCargo) };
-        const update: UpdateFilter<Document> = {
-            $set: { nomeCargo: objCargoModel.nomeCargo }
-        };
+        const update: UpdateFilter<Document> = { $set: { nomeCargo: objCargoModel.nomeCargo } };
         const result = await collection.updateOne(filter, update);
-        return result.modifiedCount > 0;
+        return result.matchedCount > 0;
     }
 
-    /**
-     * Retorna todos os cargos cadastrados no banco de dados.
-     * 
-     * @returns Array de instâncias de Cargo.
-     * 
-     * @example
-     * const todosCargos = await cargoDAO.findAll();
-     * todosCargos.forEach(c => console.log(c.nomeCargo));
-     */
     public async findAll(): Promise<Cargo[]> {
-        console.log("🟢 CargoDAO.findAll()");
+        log.debug("findAll()");
         const collection = await this.getCollection();
-        const cursor = collection.find({});
-        const docs = await cursor.toArray();
+        const docs = await collection.find({}).toArray();
         return docs.map(doc => this.toCargo(doc));
     }
 
-    /**
-     * Busca um cargo pelo ID.
-     * 
-     * @param idCargo - ID do cargo no formato string hex.
-     * @returns O cargo encontrado ou `null` se não existir.
-     * 
-     * @example
-     * const cargo = await cargoDAO.findById("67a1b2c3d4e5f6a7b8c9d0e1");
-     * if (cargo) console.log(cargo.nomeCargo);
-     */
     public async findById(idCargo: string): Promise<Cargo | null> {
-        console.log("🟢 CargoDAO.findById()");
+        log.debug("findById()", { idCargo });
         const collection = await this.getCollection();
         const filter: Filter<Document> = { _id: new ObjectId(idCargo) };
         const doc = await collection.findOne(filter);
         return doc ? this.toCargo(doc) : null;
     }
 
-    /**
-     * Busca cargos por um campo específico (somente "_id" ou "nomeCargo").
-     * 
-     * @param field - Nome do campo ("_id" ou "nomeCargo").
-     * @param value - Valor a ser pesquisado.
-     * @returns Array de cargos que correspondem ao filtro.
-     * @throws {Error} Se o campo não for permitido.
-     * 
-     * @example
-     * const cargos = await cargoDAO.findByField("nomeCargo", "Administrador");
-     */
     public async findByField(field: string, value: any): Promise<Cargo[]> {
-        console.log(`🟢 CargoDAO.findByField() - Campo: ${field}, Valor: ${value}`);
         const allowedFields = ["_id", "nomeCargo"];
         if (!allowedFields.includes(field)) {
             throw new Error(`Campo inválido para busca: ${field}`);
         }
+
         const collection = await this.getCollection();
         let filter: Filter<Document> = {};
+
         if (field === "_id") {
             filter = { _id: new ObjectId(value) };
+        } else if (field === "nomeCargo") {
+            filter = {
+                nomeCargo: { $regex: `^${this.escapeRegex(String(value))}$`, $options: "i" }
+            };
         } else {
             filter = { [field]: value };
         }
-        const cursor = collection.find(filter);
-        const docs = await cursor.toArray();
+
+        const docs = await collection.find(filter).toArray();
         return docs.map(doc => this.toCargo(doc));
     }
 
-    /**
-     * Retorna a quantidade total de cargos cadastrados.
-     * 
-     * @returns Número total de cargos.
-     * 
-     * @example
-     * const total = await cargoDAO.count();
-     * console.log(`Existem ${total} cargos.`);
-     */
     public async count(): Promise<number> {
-        console.log("🟢 CargoDAO.count()");
+        log.debug("count()");
         const collection = await this.getCollection();
         return await collection.countDocuments();
     }
 
-    /**
-     * Converte um documento do MongoDB em uma instância de Cargo.
-     * 
-     * @param doc - Documento bruto do MongoDB (deve conter _id e nomeCargo).
-     * @returns Instância de Cargo com os dados do documento.
-     * @private
-     */
     private toCargo(doc: any): Cargo {
         const cargo = new Cargo();
         cargo.idCargo = doc._id.toHexString();

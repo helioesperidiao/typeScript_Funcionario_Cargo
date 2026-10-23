@@ -1,0 +1,213 @@
+20:06:46.684 [34mdebug[39m [Server] constructor()
+20:06:46.703 [34mdebug[39m [Server] init()
+20:06:46.836 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+20:07:05.787 [34mdebug[39m [Server] constructor()
+20:07:05.821 [34mdebug[39m [Server] init()
+20:07:05.935 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+20:08:48.673 [34mdebug[39m [Server] constructor()
+20:08:48.849 [34mdebug[39m [Server] init()
+20:08:49.163 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+20:08:58.509 [34mdebug[39m [Server] constructor()
+20:08:58.560 [34mdebug[39m [Server] init()
+20:08:58.740 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+20:09:03.920 [32mhttp[39m [HTTP] request {"method":"GET","url":"/Cargos.html","status":304,"durationMs":9.33}
+20:09:03.940 [32mhttp[39m [HTTP] request {"method":"GET","url":"/css/bootstrap.min.css","status":304,"durationMs":5.81}
+20:09:03.945 [32mhttp[39m [HTTP] request {"method":"GET","url":"/js/bootstrap.bundle.min.js","status":304,"durationMs":7.32}
+20:09:03.971 [32mhttp[39m [HTTP] request {"method":"GET","url":"/ApiService.js","status":304,"durationMs":3.67}
+20:09:03.999 [34mdebug[39m [JwtMiddleware] validateToken()
+20:09:04.033 [34mdebug[39m [CargoController] findAll()
+20:09:04.057 [32mhttp[39m [HTTP] request {"method":"GET","url":"/api/v1/cargos","status":304,"durationMs":64.15}
+20:09:16.757 [32mhttp[39m [HTTP] request {"method":"GET","url":"/Cargos.html","status":304,"durationMs":1.85}
+20:09:16.786 [32mhttp[39m [HTTP] request {"method":"GET","url":"/css/bootstrap.min.css","status":304,"durationMs":4.57}
+20:09:16.789 [32mhttp[39m [HTTP] request {"method":"GET","url":"/js/bootstrap.bundle.min.js","status":304,"durationMs":5.91}
+20:09:16.849 [32mhttp[39m [HTTP] request {"method":"GET","url":"/ApiService.js","status":304,"durationMs":3.61}
+20:09:16.975 [34mdebug[39m [JwtMiddleware] validateToken()
+20:09:17.079 [34mdebug[39m [CargoController] findAll()
+20:09:17.093 [32mhttp[39m [HTTP] request {"method":"GET","url":"/api/v1/cargos","status":304,"durationMs":120.05}
+20:09:42.000 [34mdebug[39m [Server] constructor()
+20:09:42.085 [34mdebug[39m [Server] init()
+20:09:42.355 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+20:09:59.718 [34mdebug[39m [Server] constructor()
+20:09:59.806 [34mdebug[39m [Server] init()
+20:09:59.835 [34mdebug[39m [FuncionarioDAO] count()
+20:10:00.149 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+20:10:15.108 [34mdebug[39m [Server] constructor()
+20:10:15.117 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+20:10:15.133 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+20:10:15.140 [34mdebug[39m [Server] init()
+20:10:15.152 [34mdebug[39m [FuncionarioDAO] count()
+20:10:15.279 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+20:10:15.318 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+20:10:42.268 [34mdebug[39m [Server] constructor()
+20:10:42.284 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+20:10:42.296 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+20:10:42.302 [34mdebug[39m [Server] init()
+20:10:42.304 [34mdebug[39m [FuncionarioDAO] count()
+20:10:42.570 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+20:10:42.610 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+20:10:51.820 [34mdebug[39m [Server] constructor()
+20:10:51.827 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+20:10:51.834 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+20:10:51.837 [34mdebug[39m [Server] init()
+20:10:51.838 [34mdebug[39m [FuncionarioDAO] count()
+20:10:51.910 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+20:10:51.933 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+20:11:24.543 [34mdebug[39m [Server] constructor()
+20:11:24.613 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+20:11:24.820 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+20:11:25.054 [34mdebug[39m [Server] init()
+20:11:25.274 [34mdebug[39m [FuncionarioDAO] count()
+20:11:25.581 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+20:11:25.629 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+20:11:33.509 [34mdebug[39m [Server] constructor()
+20:11:33.516 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+20:11:33.524 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+20:11:33.528 [34mdebug[39m [Server] init()
+20:11:33.529 [34mdebug[39m [FuncionarioDAO] count()
+20:11:33.619 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+20:11:33.670 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+20:12:10.938 [34mdebug[39m [Server] constructor()
+20:12:10.944 [34mdebug[39m [CargoRouter] constructor()
+20:12:10.946 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+20:12:10.951 [34mdebug[39m [FuncionarioRouter] constructor()
+20:12:10.953 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+20:12:10.955 [34mdebug[39m [Server] init()
+20:12:10.957 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+20:12:10.958 [34mdebug[39m [FuncionarioDAO] count()
+20:12:11.034 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+20:12:11.051 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+20:12:11.060 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+20:12:16.258 [32mhttp[39m [HTTP] request {"method":"GET","url":"/Cargos.html","status":304,"durationMs":9.3}
+20:12:16.286 [32mhttp[39m [HTTP] request {"method":"GET","url":"/css/bootstrap.min.css","status":304,"durationMs":4.69}
+20:12:16.289 [32mhttp[39m [HTTP] request {"method":"GET","url":"/js/bootstrap.bundle.min.js","status":304,"durationMs":4.54}
+20:12:16.304 [32mhttp[39m [HTTP] request {"method":"GET","url":"/ApiService.js","status":304,"durationMs":0.98}
+20:12:16.315 [34mdebug[39m [JwtMiddleware] validateToken()
+20:12:16.316 [34mdebug[39m [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+20:12:16.329 [34mdebug[39m [CargoController] findAll()
+20:12:16.332 [34mdebug[39m [CargoService] findAll()
+20:12:16.332 [34mdebug[39m [CargoDAO] findAll()
+20:12:16.348 [32mhttp[39m [HTTP] request {"method":"GET","url":"/api/v1/cargos","status":304,"durationMs":36.02}
+20:13:19.607 [34mdebug[39m [Server] constructor()
+20:13:19.613 [34mdebug[39m [CargoRouter] constructor()
+20:13:19.614 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+20:13:19.619 [34mdebug[39m [FuncionarioRouter] constructor()
+20:13:19.620 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+20:13:19.622 [34mdebug[39m [Server] init()
+20:13:19.623 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+20:13:19.626 [34mdebug[39m [FuncionarioDAO] count()
+20:13:19.697 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+20:13:19.715 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+20:13:19.721 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+20:24:05.218 [34mdebug[39m [JwtMiddleware] validateToken()
+20:24:05.220 [34mdebug[39m [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+20:24:05.231 [34mdebug[39m [CargoController] findAll()
+20:24:05.233 [34mdebug[39m [CargoService] findAll()
+20:24:05.234 [34mdebug[39m [CargoDAO] findAll()
+20:24:05.257 [32mhttp[39m [HTTP] request {"method":"GET","url":"/api/v1/cargos","status":304,"durationMs":41.39}
+20:24:13.585 [34mdebug[39m [JwtMiddleware] validateToken()
+20:24:13.585 [34mdebug[39m [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+20:24:13.587 [34mdebug[39m [CargoController] findAll()
+20:24:13.587 [34mdebug[39m [CargoService] findAll()
+20:24:13.587 [34mdebug[39m [CargoDAO] findAll()
+20:24:13.595 [32mhttp[39m [HTTP] request {"method":"GET","url":"/api/v1/cargos","status":304,"durationMs":18.31}
+20:24:20.089 [34mdebug[39m [JwtMiddleware] validateToken()
+20:24:20.089 [34mdebug[39m [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+20:24:20.090 [34mdebug[39m [CargoController] findAll()
+20:24:20.091 [34mdebug[39m [CargoService] findAll()
+20:24:20.091 [34mdebug[39m [CargoDAO] findAll()
+20:24:20.096 [32mhttp[39m [HTTP] request {"method":"GET","url":"/api/v1/cargos","status":304,"durationMs":7.74}
+20:24:20.360 [34mdebug[39m [JwtMiddleware] validateToken()
+20:24:20.368 [34mdebug[39m [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+20:24:20.370 [34mdebug[39m [CargoController] findAll()
+20:24:20.371 [34mdebug[39m [CargoService] findAll()
+20:24:20.372 [34mdebug[39m [CargoDAO] findAll()
+20:24:20.376 [32mhttp[39m [HTTP] request {"method":"GET","url":"/api/v1/cargos","status":304,"durationMs":18.77}
+20:24:20.525 [34mdebug[39m [JwtMiddleware] validateToken()
+20:24:20.528 [34mdebug[39m [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+20:24:20.535 [34mdebug[39m [CargoController] findAll()
+20:24:20.537 [34mdebug[39m [CargoService] findAll()
+20:24:20.538 [34mdebug[39m [CargoDAO] findAll()
+20:24:20.544 [32mhttp[39m [HTTP] request {"method":"GET","url":"/api/v1/cargos","status":304,"durationMs":19.33}
+20:24:20.693 [34mdebug[39m [JwtMiddleware] validateToken()
+20:24:20.696 [34mdebug[39m [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+20:24:20.698 [34mdebug[39m [CargoController] findAll()
+20:24:20.700 [34mdebug[39m [CargoService] findAll()
+20:24:20.702 [34mdebug[39m [CargoDAO] findAll()
+20:24:20.711 [32mhttp[39m [HTTP] request {"method":"GET","url":"/api/v1/cargos","status":304,"durationMs":18.39}
+20:24:20.846 [34mdebug[39m [JwtMiddleware] validateToken()
+20:24:20.848 [34mdebug[39m [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+20:24:20.849 [34mdebug[39m [CargoController] findAll()
+20:24:20.849 [34mdebug[39m [CargoService] findAll()
+20:24:20.850 [34mdebug[39m [CargoDAO] findAll()
+20:24:20.855 [32mhttp[39m [HTTP] request {"method":"GET","url":"/api/v1/cargos","status":304,"durationMs":15.12}
+20:24:30.700 [34mdebug[39m [JwtMiddleware] validateToken()
+20:24:30.702 [34mdebug[39m [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+20:24:30.706 [34mdebug[39m [CargoController] findAll()
+20:24:30.710 [34mdebug[39m [CargoService] findAll()
+20:24:30.711 [34mdebug[39m [CargoDAO] findAll()
+20:24:30.716 [32mhttp[39m [HTTP] request {"method":"GET","url":"/api/v1/cargos","status":304,"durationMs":17.52}
+20:24:35.498 [34mdebug[39m [JwtMiddleware] validateToken()
+20:24:35.499 [34mdebug[39m [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+20:24:35.500 [34mdebug[39m [CargoController] create()
+20:24:35.501 [34mdebug[39m [CargoService] create() {"nomeCargo":"Professor"}
+20:24:35.506 [34mdebug[39m [CargoDAO] create() {"nomeCargo":"Professor"}
+20:24:35.512 [32minfo[39m [CargoDAO] cargo inserido {"idCargo":"6adbecb33a5504c4d3ecee9e","nomeCargo":"Professor"}
+20:24:35.513 [32minfo[39m [CargoService] cargo criado {"idCargo":"6adbecb33a5504c4d3ecee9e","nomeCargo":"Professor","criadoPor":"helioesperidiao@gmail.com"}
+20:24:35.514 [32mhttp[39m [HTTP] request {"method":"POST","url":"/api/v1/cargos","status":201,"durationMs":51.1}
+20:24:35.519 [34mdebug[39m [JwtMiddleware] validateToken()
+20:24:35.520 [34mdebug[39m [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+20:24:35.521 [34mdebug[39m [CargoController] findAll()
+20:24:35.522 [34mdebug[39m [CargoService] findAll()
+20:24:35.522 [34mdebug[39m [CargoDAO] findAll()
+20:24:35.534 [32mhttp[39m [HTTP] request {"method":"GET","url":"/api/v1/cargos","status":200,"durationMs":14.82}
+20:32:23.431 [34mdebug[39m [Server] constructor()
+20:32:23.442 [34mdebug[39m [CargoRouter] constructor()
+20:32:23.445 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+20:32:23.454 [34mdebug[39m [FuncionarioRouter] constructor()
+20:32:23.455 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+20:32:23.457 [34mdebug[39m [Server] init()
+20:32:23.458 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+20:32:23.459 [34mdebug[39m [FuncionarioDAO] count()
+20:32:23.546 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+20:32:23.563 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+20:32:23.570 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+20:32:37.590 [34mdebug[39m [Server] constructor()
+20:32:37.604 [34mdebug[39m [CargoRouter] constructor()
+20:32:37.609 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+20:32:37.631 [34mdebug[39m [FuncionarioRouter] constructor()
+20:32:37.647 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+20:32:37.657 [34mdebug[39m [Server] init()
+20:32:37.659 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+20:32:37.676 [34mdebug[39m [FuncionarioDAO] count()
+20:32:37.822 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+20:32:37.843 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+20:32:37.859 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+20:33:36.361 [34mdebug[39m [1fb49f00] [JwtMiddleware] validateToken()
+20:33:36.364 [34mdebug[39m [1fb49f00] [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+20:33:36.389 [34mdebug[39m [1fb49f00] [CargoController] findAll()
+20:33:36.394 [34mdebug[39m [1fb49f00] [CargoService] findAll()
+20:33:36.395 [34mdebug[39m [1fb49f00] [CargoDAO] findAll()
+20:33:36.426 [32mhttp[39m [1fb49f00] [HTTP] request {"method":"GET","url":"/api/v1/cargos","status":304,"durationMs":67.51}
+20:38:11.686 [34mdebug[39m [Server] constructor()
+20:38:11.692 [34mdebug[39m [CargoRouter] constructor()
+20:38:11.694 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+20:38:11.698 [34mdebug[39m [FuncionarioRouter] constructor()
+20:38:11.699 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+20:38:11.700 [34mdebug[39m [Server] init()
+20:38:11.701 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+20:38:11.702 [34mdebug[39m [FuncionarioDAO] count()
+20:38:11.777 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+20:38:11.796 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+20:38:11.803 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+20:38:17.782 [34mdebug[39m [85ed6c52] #01 [JwtMiddleware] validateToken()
+20:38:17.783 [34mdebug[39m [85ed6c52] #02 [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+20:38:17.789 [34mdebug[39m [85ed6c52] #03 [CargoController] findAll()
+20:38:17.792 [34mdebug[39m [85ed6c52] #04 [CargoService] findAll()
+20:38:17.794 [34mdebug[39m [85ed6c52] #05 [CargoDAO] findAll()
+20:38:17.815 [32mhttp[39m [85ed6c52] #06 [HTTP] request {"method":"GET","url":"/api/v1/cargos","status":304,"durationMs":41.77}
+20:38:25.132 [34mdebug[39m [e48d0b65] #01 [JwtMiddleware] validateToken()
+20:38:25.134 [34mdebug[39m [e48d0b65] #02 [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+20:38:25.137 [34mdebug[39m [e48d0b65] #03 [CargoController] findAll()
+20:38:25.137 [34mdebug[39m [e48d0b65] #04 [CargoService] findAll()
+20:38:25.138 [34mdebug[39m [e48d0b65] #05 [CargoDAO] findAll()
+20:38:25.152 [32mhttp[39m [e48d0b65] #06 [HTTP] request {"method":"GET","url":"/api/v1/cargos","status":304,"durationMs":24.54}

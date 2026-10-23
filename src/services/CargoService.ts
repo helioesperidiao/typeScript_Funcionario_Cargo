@@ -1,121 +1,153 @@
 import { CargoDAO } from "../dao/CargoDAO";
+import { FuncionarioDAO } from "../dao/FuncionarioDAO";
 import { Cargo } from "../models/Cargo";
 import { ErrorResponse } from "../http/ErrorResponse";
 import { Funcionario } from "../models/Funcionario";
+import { createLogger } from "../logging/Logger";
 
+const log = createLogger("CargoService");
 
-/**
- * Classe responsável pela camada de serviço para a entidade Cargo.
- * 
- * Observações sobre injeção de dependência:
- * - O CargoService **recebe uma instância de CargoDAO via construtor**.
- * - Isso segue o padrão de injeção de dependência, tornando o serviço desacoplado
- *   do DAO concreto, facilitando testes unitários e substituição por mocks.
- */
 export class CargoService {
     private _cargoDAO: CargoDAO;
+    private _funcionarioDAO: FuncionarioDAO;
 
-    /**
-     * Construtor da classe CargoService.
-     * @param cargoDAODependency - Instância de CargoDAO injetada.
-     */
-    constructor(cargoDAODependency: CargoDAO) {
-        console.log("⬆️  CargoService.constructor()");
+    constructor(cargoDAODependency: CargoDAO, funcionarioDAODependency: FuncionarioDAO) {
         this._cargoDAO = cargoDAODependency;
+        this._funcionarioDAO = funcionarioDAODependency;
     }
 
-    /**
-     * Cria um novo cargo.
-     * 
-     * 🔹 Regra de negócio: apenas usuários com cargo "Administrador" podem criar novos cargos.
-     * 🔹 Regra de negócio: não pode existir outro cargo com o mesmo nome.
-     * 
-     * @param cargo - Objeto Cargo a ser criado.
-     * @param funcionarioLogado - Funcionário autenticado que está realizando a operação.
-     * @returns O cargo criado com o ID preenchido.
-     * @throws {ErrorResponse} Se o usuário não for Administrador ou se o cargo já existir.
-     */
-   public create = async (cargo: Cargo, funcionarioLogado: Funcionario): Promise<Cargo> => {
-        console.log("🟣 CargoService.createCargo()");
+    private isAdmin(funcionario: Funcionario): boolean {
+        return funcionario.cargo?.nomeCargo === "Administrador";
+    }
 
-        if (funcionarioLogado.cargo.nomeCargo !== "Administrador") {
-            throw new ErrorResponse(
-                403,
-                "Não autorizado",
-                { message: `O cargo "${funcionarioLogado.cargo.nomeCargo}" não é autorizado a criar cargos.` }
-            );
+    public create = async (cargo: Cargo, funcionarioLogado: Funcionario): Promise<Cargo> => {
+        log.debug("create()", { nomeCargo: cargo.nomeCargo });
+
+        if (!this.isAdmin(funcionarioLogado)) {
+            log.warn("criação de cargo negada", {
+                motivo: "não é administrador",
+                cargoAtor: funcionarioLogado.cargo?.nomeCargo,
+            });
+            throw new ErrorResponse(403, "Não autorizado", {
+                message: `O cargo "${funcionarioLogado.cargo?.nomeCargo ?? 'desconhecido'}" não é autorizado a criar cargos.`
+            });
         }
 
-        // Verifica se já existe um cargo com o mesmo nome
         const resultado = await this._cargoDAO.findByField("nomeCargo", cargo.nomeCargo);
         if (resultado.length > 0) {
-            throw new ErrorResponse(
-                400,
-                "Cargo já existe",
-                { message: `O cargo "${cargo.nomeCargo}" já existe.` }
-            );
+            throw new ErrorResponse(400, "Cargo já existe", {
+                message: `O cargo "${cargo.nomeCargo}" já existe.`
+            });
         }
 
-        return await this._cargoDAO.create(cargo);
+        try {
+            const criado = await this._cargoDAO.create(cargo);
+            log.info("cargo criado", {
+                idCargo: criado.idCargo,
+                nomeCargo: criado.nomeCargo,
+                criadoPor: funcionarioLogado.email,
+            });
+            return criado;
+        } catch (err: any) {
+            if (err?.code === 11000) {
+                throw new ErrorResponse(400, "Cargo já existe", {
+                    message: `O cargo "${cargo.nomeCargo}" já existe.`
+                });
+            }
+            log.error("falha ao criar cargo", { nomeCargo: cargo.nomeCargo, error: err });
+            throw err;
+        }
     };
 
-    /**
-     * Retorna todos os cargos cadastrados.
-     * 
-     * @param _funcionarioLogado - Funcionário autenticado (não utilizado, mas mantido por consistência).
-     * @returns Lista de cargos.
-     */
     public findAll = async (_funcionarioLogado: Funcionario): Promise<Cargo[]> => {
-        console.log("🟣 CargoService.findAll()");
+        log.debug("findAll()");
         return await this._cargoDAO.findAll();
     };
 
-    /**
-     * Busca um cargo pelo ID.
-     * 
-     * @param idCargo - ID do cargo (string hexadecimal do MongoDB).
-     * @param _funcionarioLogado - Funcionário autenticado (não utilizado, mantido por consistência).
-     * @returns O cargo encontrado ou null se não existir.
-     */
-   public findById = async (idCargo: string, _funcionarioLogado: Funcionario): Promise<Cargo | null> => {
-        console.log("🟣 CargoService.findById()");
+    public findById = async (idCargo: string, _funcionarioLogado: Funcionario): Promise<Cargo | null> => {
+        log.debug("findById()", { idCargo });
         const cargo = new Cargo();
-        cargo.idCargo = idCargo; // validação de formato é feita no setter
+        cargo.idCargo = idCargo;
         return await this._cargoDAO.findById(cargo.idCargo);
     };
 
-    /**
-     * Atualiza um cargo existente.
-     * 
-     * @param cargo - Objeto Cargo com o ID e o novo nome.
-     * @param _funcionarioLogado - Funcionário autenticado (não utilizado, mantido por consistência).
-     * @returns true se a atualização foi bem-sucedida, false caso contrário.
-     */
-   public update = async (cargo: Cargo, _funcionarioLogado: Funcionario): Promise<boolean> => {
-        console.log("🟣 CargoService.updateCargo()");
-        return await this._cargoDAO.update(cargo);
+    public update = async (cargo: Cargo, funcionarioLogado: Funcionario): Promise<boolean> => {
+        log.debug("update()", { idCargo: cargo.idCargo });
+
+        if (!this.isAdmin(funcionarioLogado)) {
+            log.warn("atualização de cargo negada", {
+                motivo: "não é administrador",
+                cargoAtor: funcionarioLogado.cargo?.nomeCargo,
+            });
+            throw new ErrorResponse(403, "Não autorizado", {
+                message: `O cargo "${funcionarioLogado.cargo?.nomeCargo ?? 'desconhecido'}" não é autorizado a atualizar cargos.`
+            });
+        }
+
+        const duplicados = await this._cargoDAO.findByField("nomeCargo", cargo.nomeCargo);
+        const duplicadoDeOutro = duplicados.some(c => c.idCargo !== cargo.idCargo);
+        if (duplicadoDeOutro) {
+            throw new ErrorResponse(400, "Cargo já existe", {
+                message: `O cargo "${cargo.nomeCargo}" já existe.`
+            });
+        }
+
+        try {
+            const atualizou = await this._cargoDAO.update(cargo);
+            if (atualizou) {
+                log.info("cargo atualizado", {
+                    idCargo: cargo.idCargo,
+                    nomeCargo: cargo.nomeCargo,
+                    atualizadoPor: funcionarioLogado.email,
+                });
+            }
+            return atualizou;
+        } catch (err: any) {
+            if (err?.code === 11000) {
+                throw new ErrorResponse(400, "Cargo já existe", {
+                    message: `O cargo "${cargo.nomeCargo}" já existe.`
+                });
+            }
+            throw err;
+        }
     };
 
-    /**
-     * Deleta um cargo pelo ID.
-     * 
-     * @param cargo - Objeto Cargo contendo o ID a ser removido.
-     * @param _funcionarioLogado - Funcionário autenticado (não utilizado, mantido por consistência).
-     * @returns true se a exclusão foi bem-sucedida, false caso contrário.
-     */
-  public  delete = async (cargo: Cargo, _funcionarioLogado: Funcionario): Promise<boolean> => {
-        console.log("🟣 CargoService.delete()");
-        return await this._cargoDAO.delete(cargo);
+    public delete = async (cargo: Cargo, funcionarioLogado: Funcionario): Promise<boolean> => {
+        log.debug("delete()", { idCargo: cargo.idCargo });
+
+        if (!this.isAdmin(funcionarioLogado)) {
+            log.warn("exclusão de cargo negada", {
+                motivo: "não é administrador",
+                cargoAtor: funcionarioLogado.cargo?.nomeCargo,
+            });
+            throw new ErrorResponse(403, "Não autorizado", {
+                message: `O cargo "${funcionarioLogado.cargo?.nomeCargo ?? 'desconhecido'}" não é autorizado a excluir cargos.`
+            });
+        }
+
+        const total = await this._funcionarioDAO.countByCargoId(cargo.idCargo);
+        if (total > 0) {
+            log.warn("exclusão de cargo bloqueada", {
+                idCargo: cargo.idCargo,
+                funcionariosVinculados: total,
+            });
+            throw new ErrorResponse(400, "Não é possível excluir o cargo", {
+                message: `Existem ${total} funcionário(s) vinculados a este cargo. Reatribua-os antes de excluir.`
+            });
+        }
+
+        const excluiu = await this._cargoDAO.delete(cargo);
+        if (excluiu) {
+            log.info("cargo excluído", {
+                idCargo: cargo.idCargo,
+                excluidoPor: funcionarioLogado.email,
+            });
+        }
+        return excluiu;
     };
 
-    /**
-     * Retorna a quantidade total de cargos cadastrados.
-     * 
-     * @param _funcionarioLogado - Funcionário autenticado (não utilizado, mantido por consistência).
-     * @returns Número total de cargos.
-     */
     public count = async (_funcionarioLogado: Funcionario): Promise<number> => {
-        console.log("🟣 CargoService.countCargos()");
+        log.debug("count()");
         return await this._cargoDAO.count();
     };
 }

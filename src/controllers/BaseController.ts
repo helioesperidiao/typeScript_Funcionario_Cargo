@@ -1,13 +1,14 @@
 // src/controllers/BaseController.ts
 import { Request } from "express";
 import { Funcionario } from "../models/Funcionario";
-
+import { ErrorResponse } from "../http/ErrorResponse";
 
 export abstract class BaseController {
     protected getFuncionarioLogado(request: Request): Funcionario {
         const funcionarioLogadoJson = (request as any).funcionarioLogado;
         if (!funcionarioLogadoJson) {
-            throw new Error("Funcionário não autenticado");
+            // ✅ 401 em vez de Error genérico (antes virava 500)
+            throw new ErrorResponse(401, "Funcionário não autenticado");
         }
 
         const funcionarioLogado = new Funcionario();
@@ -20,5 +21,18 @@ export abstract class BaseController {
         }
 
         return funcionarioLogado;
+    }
+
+    /**
+     * Valida que o corpo da requisição contém um objeto obrigatório
+     * (ex.: `{ funcionario: {...} }`, `{ cargo: {...} }`).
+     * Lança ErrorResponse(400) caso contrário.
+     */
+    protected requireBody(request: Request, key: string): any {
+        const value = request.body?.[key];
+        if (!value || typeof value !== "object") {
+            throw new ErrorResponse(400, `Corpo da requisição inválido: "${key}" é obrigatório`);
+        }
+        return value;
     }
 }
