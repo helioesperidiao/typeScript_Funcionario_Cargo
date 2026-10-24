@@ -8,11 +8,13 @@ const log = createLogger("HTTP");
 
 const STATIC_EXTENSIONS = /\.(html?|css|js|mjs|map|ico|png|jpe?g|gif|svg|webp|woff2?|ttf|eot|otf|pdf|txt|xml|json)$/i;
 
+/** Identifica assets estáticos para não registrar cada arquivo servido pelo site. */
 const isStaticAsset = (req: Request): boolean => {
     if (req.method !== "GET" && req.method !== "HEAD") return false;
     return STATIC_EXTENSIONS.test(req.path);
 };
 
+/** Registra duração, status e identificador das requisições que chegam à API. */
 export const httpLogger = (req: Request, res: Response, next: NextFunction): void => {
     if (isStaticAsset(req)) {
         return next();
@@ -21,6 +23,7 @@ export const httpLogger = (req: Request, res: Response, next: NextFunction): voi
     const requestId = randomUUID().slice(0, 8);
     res.setHeader("X-Request-Id", requestId);
 
+    // O relógio monotônico mede duração com precisão sem depender do relógio do sistema.
     const start = process.hrtime.bigint();
 
     res.on("finish", () => {

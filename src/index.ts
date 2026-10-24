@@ -9,9 +9,11 @@ import { createLogger } from "./logging/Logger";
 
 const log = createLogger("Bootstrap");
 
+/** Lê a configuração de porta, prepara o servidor e inicia sua escuta. */
 const startServer = async (): Promise<void> => {
     try {
         const rawPort = process.env.PORT;
+        // parseInt pode retornar NaN quando PORT estiver ausente ou inválida.
         const parsedPort = rawPort ? parseInt(rawPort, 10) : NaN;
         const PORT: number = !Number.isNaN(parsedPort) ? parsedPort : 3000;
 

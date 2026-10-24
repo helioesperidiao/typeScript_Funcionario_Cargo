@@ -6,6 +6,7 @@ dotenv.config();
 
 const log = createLogger("MongoDatabase");
 
+/** Mantém e fornece a conexão compartilhada da aplicação com o MongoDB. */
 export class MongoDatabase {
     private static _client: MongoClient | null = null;
     private static _db: Db | null = null;
@@ -14,6 +15,7 @@ export class MongoDatabase {
     private _databaseName: string;
     private _options: MongoClientOptions;
 
+    /** Combina opções recebidas com valores de ambiente e padrões seguros. */
     constructor(config: { uri?: string; database?: string; options?: MongoClientOptions } = {}) {
         const envUri = process.env.MONGO_URI;
         const envDatabase = process.env.MONGO_DATABASE;
@@ -41,6 +43,7 @@ export class MongoDatabase {
         });
     }
 
+    /** Abre a conexão apenas uma vez e guarda o cliente e o banco selecionado. */
     public async connect(): Promise<MongoClient> {
         if (!MongoDatabase._client) {
             try {
@@ -56,15 +59,18 @@ export class MongoDatabase {
         return MongoDatabase._client;
     }
 
+    /** Retorna o cliente MongoDB conectado. */
     public async getClient(): Promise<MongoClient> {
         return await this.connect();
     }
 
+    /** Retorna o banco configurado, aguardando a conexão se necessário. */
     public async getDb(): Promise<Db> {
         await this.connect();
         return MongoDatabase._db!;
     }
 
+    /** Fecha a conexão e limpa as referências compartilhadas para permitir reconexão. */
     public async close(): Promise<void> {
         if (MongoDatabase._client) {
             await MongoDatabase._client.close();

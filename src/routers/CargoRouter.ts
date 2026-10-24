@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { JwtMiddleware } from "../middlewares/JwtMiddleware";
+import { PermissaoAdminMiddleware } from "../middlewares/PermissaoAdminMiddleware";
 import { CargoController } from "../controllers/CargoController";
 import { CargoService } from "../services/CargoService";
 import { CargoDAO } from "../dao/CargoDAO";
@@ -10,11 +11,13 @@ import { createLogger } from "../logging/Logger";
 
 const log = createLogger("CargoRouter");
 
+/** Registra os endpoints de cargos e os middlewares que protegem cada operação. */
 export class CargoRouter {
-    public static readonly PREFIX = "/api/v1/cargos";
+    public static readonly PREFIX = "/api/cargos";
 
     private _router: Router;
 
+    /** Conecta as camadas da funcionalidade e associa controllers aos endpoints. */
     constructor() {
         log.debug("constructor()");
 
@@ -28,18 +31,39 @@ export class CargoRouter {
         const cargoService = new CargoService(cargoDAO, funcionarioDAO);
         const cargoController = new CargoController(cargoService);
         const jwtMiddleware = new JwtMiddleware();
+        const permissaoAdmin = new PermissaoAdminMiddleware();
 
-        subRouter.post("/", jwtMiddleware.validateToken, asyncHandler(cargoController.create));
+        // A ordem importa: primeiro autenticamos, depois verificamos o perfil admin.
+        // Rotas de escrita — exigem Administrador
+        subRouter.post(
+            "/",
+            jwtMiddleware.validateToken,
+            permissaoAdmin.verificarPermissaoAdmin,
+            asyncHandler(cargoController.create)
+        );
+        subRouter.put(
+            "/:idCargo",
+            jwtMiddleware.validateToken,
+            permissaoAdmin.verificarPermissaoAdmin,
+            asyncHandler(cargoController.update)
+        );
+        subRouter.delete(
+            "/:idCargo",
+            jwtMiddleware.validateToken,
+            permissaoAdmin.verificarPermissaoAdmin,
+            asyncHandler(cargoController.delete)
+        );
+
+        // Rotas de leitura — qualquer usuário logado
         subRouter.get("/", jwtMiddleware.validateToken, asyncHandler(cargoController.findAll));
         subRouter.get("/count", jwtMiddleware.validateToken, asyncHandler(cargoController.count));
         subRouter.get("/:idCargo", jwtMiddleware.validateToken, asyncHandler(cargoController.findById));
-        subRouter.put("/:idCargo", jwtMiddleware.validateToken, asyncHandler(cargoController.update));
-        subRouter.delete("/:idCargo", jwtMiddleware.validateToken, asyncHandler(cargoController.delete));
 
         mainRouter.use(CargoRouter.PREFIX, subRouter);
         this._router = mainRouter;
     }
 
+    /** Fornece o roteador Express para que o servidor o registre. */
     public getRouter = (): Router => {
         return this._router;
     };

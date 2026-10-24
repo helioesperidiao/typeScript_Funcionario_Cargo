@@ -11,12 +11,14 @@ import { createLogger } from "./logging/Logger";
 
 const log = createLogger("Server");
 
+/** Configura o Express e reúne as rotas da API da aplicação. */
 export class Server {
     private _porta: number;
     private _app: Express;
     private _cargoRouter: CargoRouter;
     private _funcionarioRouter: FuncionarioRouter;
 
+    /** Cria a aplicação e prepara os roteadores das funcionalidades. */
     constructor(porta: number) {
         log.debug("constructor()");
         this._porta = porta;
@@ -25,6 +27,10 @@ export class Server {
         this._funcionarioRouter = new FuncionarioRouter();
     }
 
+    /**
+     * Registra middlewares, arquivos estáticos, rotas e tratamento de erros.
+     * Também tenta garantir a existência do administrador inicial.
+     */
     async init(): Promise<void> {
         log.debug("init()");
 
@@ -41,6 +47,11 @@ export class Server {
         const publicDir = path.resolve(__dirname, "public");
         this._app.use(express.static(publicDir));
 
+        // 👇 raiz → login.html
+        this._app.get("/", (_req: Request, res: Response) => {
+            res.sendFile(path.join(publicDir, "login.html"));
+        });
+
         this._app.use(this._cargoRouter.getRouter());
         this._app.use(this._funcionarioRouter.getRouter());
 
@@ -51,6 +62,7 @@ export class Server {
         this.setupErrorMiddleware();
     }
 
+    /** Converte erros conhecidos e inesperados em respostas HTTP padronizadas. */
     private setupErrorMiddleware(): void {
         this._app.use((error: any, _req: Request, res: Response, _next: NextFunction) => {
             if (error instanceof ErrorResponse) {
@@ -73,6 +85,7 @@ export class Server {
         });
     }
 
+    /** Inicia o servidor HTTP na porta configurada. */
     run(): void {
         this._app
             .listen(this._porta)

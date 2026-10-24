@@ -211,3 +211,279 @@
 20:38:25.137 [34mdebug[39m [e48d0b65] #04 [CargoService] findAll()
 20:38:25.138 [34mdebug[39m [e48d0b65] #05 [CargoDAO] findAll()
 20:38:25.152 [32mhttp[39m [e48d0b65] #06 [HTTP] request {"method":"GET","url":"/api/v1/cargos","status":304,"durationMs":24.54}
+08:54:11.659 [34mdebug[39m [Server] constructor()
+08:54:11.661 [34mdebug[39m [CargoRouter] constructor()
+08:54:11.661 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+08:54:11.662 [34mdebug[39m [FuncionarioRouter] constructor()
+08:54:11.662 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+08:54:11.663 [34mdebug[39m [Server] init()
+08:54:11.663 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+08:54:11.663 [34mdebug[39m [FuncionarioDAO] count()
+08:54:11.687 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+08:54:11.730 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+08:54:11.732 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+08:54:18.285 [33mwarn[39m [d5663123] #01 [HTTP] request error {"method":"GET","url":"/","status":404,"durationMs":3.6}
+08:55:37.051 [34mdebug[39m [Server] constructor()
+08:55:37.053 [34mdebug[39m [CargoRouter] constructor()
+08:55:37.053 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+08:55:37.055 [34mdebug[39m [FuncionarioRouter] constructor()
+08:55:37.055 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+08:55:37.055 [34mdebug[39m [Server] init()
+08:55:37.055 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+08:55:37.056 [34mdebug[39m [FuncionarioDAO] count()
+08:55:37.076 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+08:55:37.081 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+08:55:37.082 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+08:55:42.931 [32mhttp[39m [91056995] #01 [HTTP] request {"method":"GET","url":"/","status":200,"durationMs":4.27}
+08:56:08.061 [32mhttp[39m [d88a0f8c] #01 [HTTP] request {"method":"GET","url":"/","status":304,"durationMs":0.74}
+08:56:14.476 [34mdebug[39m [7e5158f8] #01 [FuncionarioController] login()
+08:56:14.477 [34mdebug[39m [7e5158f8] #02 [FuncionarioService] loginFuncionario() {"email":"helioesperidiao@gmail.com"}
+08:56:14.477 [34mdebug[39m [7e5158f8] #03 [FuncionarioDAO] findByEmail() {"email":"helioesperidiao@gmail.com"}
+08:56:14.727 [34mdebug[39m [7e5158f8] #04 [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+08:56:14.728 [34mdebug[39m [7e5158f8] #05 [MeuTokenJWT] gerarToken() {"idFuncionario":"6adbcb463051fa8f0ed90d32"}
+08:56:14.729 [32minfo[39m [7e5158f8] #06 [FuncionarioService] login efetuado {"idFuncionario":"6adbcb463051fa8f0ed90d32"}
+08:56:14.730 [32mhttp[39m [7e5158f8] #07 [HTTP] request {"method":"POST","url":"/api/v1/funcionarios/login","status":200,"durationMs":376.84}
+08:56:15.917 [34mdebug[39m [1d757865] #01 [JwtMiddleware] validateToken()
+08:56:15.917 [34mdebug[39m [1d757865] #02 [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+08:56:15.918 [34mdebug[39m [1d757865] #03 [CargoController] findAll()
+08:56:15.919 [34mdebug[39m [1d757865] #04 [CargoService] findAll()
+08:56:15.919 [34mdebug[39m [1d757865] #05 [CargoDAO] findAll()
+08:56:15.938 [32mhttp[39m [1d757865] #06 [HTTP] request {"method":"GET","url":"/api/v1/cargos","status":200,"durationMs":20.87}
+08:56:20.227 [34mdebug[39m [72d87607] #01 [JwtMiddleware] validateToken()
+08:56:20.228 [34mdebug[39m [72d87607] #02 [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+08:56:20.228 [34mdebug[39m [72d87607] #03 [CargoController] findAll()
+08:56:20.228 [34mdebug[39m [72d87607] #04 [CargoService] findAll()
+08:56:20.228 [34mdebug[39m [72d87607] #05 [CargoDAO] findAll()
+08:56:20.230 [32mhttp[39m [72d87607] #06 [HTTP] request {"method":"GET","url":"/api/v1/cargos","status":304,"durationMs":2.65}
+08:56:20.237 [34mdebug[39m [99642953] #01 [JwtMiddleware] validateToken()
+08:56:20.237 [34mdebug[39m [99642953] #02 [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+08:56:20.238 [34mdebug[39m [99642953] #03 [FuncionarioController] findAll()
+08:56:20.238 [34mdebug[39m [99642953] #04 [FuncionarioService] findAll()
+08:56:20.238 [34mdebug[39m [99642953] #05 [FuncionarioDAO] findAll()
+08:56:20.240 [32mhttp[39m [99642953] #06 [HTTP] request {"method":"GET","url":"/api/v1/funcionarios","status":200,"durationMs":3.51}
+08:58:00.313 [34mdebug[39m [Server] constructor()
+08:58:00.315 [34mdebug[39m [CargoRouter] constructor()
+08:58:00.316 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+08:58:00.317 [34mdebug[39m [FuncionarioRouter] constructor()
+08:58:00.318 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+08:58:00.318 [34mdebug[39m [Server] init()
+08:58:00.319 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+08:58:00.319 [34mdebug[39m [FuncionarioDAO] count()
+08:58:00.340 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+08:58:00.346 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+08:58:00.348 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+08:58:03.104 [34mdebug[39m [Server] constructor()
+08:58:03.106 [34mdebug[39m [CargoRouter] constructor()
+08:58:03.107 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+08:58:03.108 [34mdebug[39m [FuncionarioRouter] constructor()
+08:58:03.108 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+08:58:03.109 [34mdebug[39m [Server] init()
+08:58:03.109 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+08:58:03.109 [34mdebug[39m [FuncionarioDAO] count()
+08:58:03.129 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+08:58:03.133 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+08:58:03.135 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+08:58:21.704 [34mdebug[39m [Server] constructor()
+08:58:21.705 [34mdebug[39m [CargoRouter] constructor()
+08:58:21.706 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+08:58:21.707 [34mdebug[39m [FuncionarioRouter] constructor()
+08:58:21.707 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+08:58:21.708 [34mdebug[39m [Server] init()
+08:58:21.708 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+08:58:21.708 [34mdebug[39m [FuncionarioDAO] count()
+08:58:21.728 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+08:58:21.733 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+08:58:21.735 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+08:59:11.783 [34mdebug[39m [Server] constructor()
+08:59:11.784 [34mdebug[39m [CargoRouter] constructor()
+08:59:11.785 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+08:59:11.786 [34mdebug[39m [FuncionarioRouter] constructor()
+08:59:11.786 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+08:59:11.787 [34mdebug[39m [Server] init()
+08:59:11.787 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+08:59:11.788 [34mdebug[39m [FuncionarioDAO] count()
+08:59:11.811 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+08:59:11.816 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+08:59:11.818 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+09:00:03.943 [34mdebug[39m [Server] constructor()
+09:00:03.945 [34mdebug[39m [CargoRouter] constructor()
+09:00:03.945 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:00:03.947 [34mdebug[39m [FuncionarioRouter] constructor()
+09:00:03.947 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:00:03.947 [34mdebug[39m [Server] init()
+09:00:03.948 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+09:00:03.948 [34mdebug[39m [FuncionarioDAO] count()
+09:00:03.970 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+09:00:03.975 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+09:00:03.977 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+09:00:34.430 [34mdebug[39m [Server] constructor()
+09:00:34.431 [34mdebug[39m [CargoRouter] constructor()
+09:00:34.432 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:00:34.433 [34mdebug[39m [FuncionarioRouter] constructor()
+09:00:34.434 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:00:34.434 [34mdebug[39m [Server] init()
+09:00:34.434 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+09:00:34.435 [34mdebug[39m [FuncionarioDAO] count()
+09:00:34.456 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+09:00:34.460 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+09:00:34.463 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+09:00:39.549 [34mdebug[39m [Server] constructor()
+09:00:39.551 [34mdebug[39m [CargoRouter] constructor()
+09:00:39.551 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:00:39.553 [34mdebug[39m [FuncionarioRouter] constructor()
+09:00:39.553 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:00:39.553 [34mdebug[39m [Server] init()
+09:00:39.554 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+09:00:39.554 [34mdebug[39m [FuncionarioDAO] count()
+09:00:39.575 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+09:00:39.580 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+09:00:39.582 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+09:00:54.166 [34mdebug[39m [Server] constructor()
+09:00:54.168 [34mdebug[39m [CargoRouter] constructor()
+09:00:54.168 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:00:54.170 [34mdebug[39m [FuncionarioRouter] constructor()
+09:00:54.170 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:00:54.170 [34mdebug[39m [Server] init()
+09:00:54.170 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+09:00:54.171 [34mdebug[39m [FuncionarioDAO] count()
+09:00:54.192 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+09:00:54.197 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+09:00:54.199 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+09:01:03.106 [34mdebug[39m [Server] constructor()
+09:01:03.108 [34mdebug[39m [CargoRouter] constructor()
+09:01:03.109 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:01:03.110 [34mdebug[39m [FuncionarioRouter] constructor()
+09:01:03.110 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:01:03.111 [34mdebug[39m [Server] init()
+09:01:03.111 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+09:01:03.111 [34mdebug[39m [FuncionarioDAO] count()
+09:01:03.131 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+09:01:03.136 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+09:01:03.138 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+09:01:15.259 [34mdebug[39m [Server] constructor()
+09:01:15.261 [34mdebug[39m [CargoRouter] constructor()
+09:01:15.261 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:01:15.262 [34mdebug[39m [FuncionarioRouter] constructor()
+09:01:15.262 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:01:15.263 [34mdebug[39m [Server] init()
+09:01:15.263 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+09:01:15.263 [34mdebug[39m [FuncionarioDAO] count()
+09:01:15.284 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+09:01:15.289 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+09:01:15.291 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+09:01:54.697 [33mwarn[39m [7a678af5] #01 [HTTP] request error {"method":"GET","url":"/api/v1/cargos","status":404,"durationMs":1.65}
+09:02:48.182 [34mdebug[39m [806b81f0] #01 [JwtMiddleware] validateToken()
+09:02:48.182 [34mdebug[39m [806b81f0] #02 [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+09:02:48.184 [34mdebug[39m [806b81f0] #03 [CargoController] findAll()
+09:02:48.184 [34mdebug[39m [806b81f0] #04 [CargoService] findAll()
+09:02:48.184 [34mdebug[39m [806b81f0] #05 [CargoDAO] findAll()
+09:02:48.188 [32mhttp[39m [806b81f0] #06 [HTTP] request {"method":"GET","url":"/api/cargos","status":200,"durationMs":6.32}
+09:08:56.249 [34mdebug[39m [Server] constructor()
+09:08:56.251 [34mdebug[39m [CargoRouter] constructor()
+09:08:56.251 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:08:56.253 [34mdebug[39m [FuncionarioRouter] constructor()
+09:08:56.253 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:08:56.253 [34mdebug[39m [Server] init()
+09:08:56.254 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+09:08:56.254 [34mdebug[39m [FuncionarioDAO] count()
+09:08:56.274 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+09:08:56.278 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+09:08:56.280 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+09:08:57.904 [32mhttp[39m [053edf39] #01 [HTTP] request {"method":"GET","url":"/","status":304,"durationMs":2.98}
+09:09:49.855 [32mhttp[39m [f6edb66f] #01 [HTTP] request {"method":"GET","url":"/","status":304,"durationMs":0.79}
+09:09:55.353 [33mwarn[39m [0507e4c1] #01 [HTTP] request error {"method":"POST","url":"/api/v1/funcionarios/login","status":404,"durationMs":8.1}
+09:10:19.067 [32mhttp[39m [0025f8ab] #01 [HTTP] request {"method":"GET","url":"/","status":200,"durationMs":1.48}
+09:10:26.635 [34mdebug[39m [9938928e] #01 [FuncionarioController] login()
+09:10:26.636 [34mdebug[39m [9938928e] #02 [FuncionarioService] loginFuncionario() {"email":"helioesperidiao@gmail.com"}
+09:10:26.636 [34mdebug[39m [9938928e] #03 [FuncionarioDAO] findByEmail() {"email":"helioesperidiao@gmail.com"}
+09:10:26.806 [34mdebug[39m [9938928e] #04 [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+09:10:26.806 [34mdebug[39m [9938928e] #05 [MeuTokenJWT] gerarToken() {"idFuncionario":"6adbcb463051fa8f0ed90d32"}
+09:10:26.808 [32minfo[39m [9938928e] #06 [FuncionarioService] login efetuado {"idFuncionario":"6adbcb463051fa8f0ed90d32"}
+09:10:26.808 [32mhttp[39m [9938928e] #07 [HTTP] request {"method":"POST","url":"/api/funcionarios/login","status":200,"durationMs":173.28}
+09:10:27.994 [34mdebug[39m [e681fd01] #01 [JwtMiddleware] validateToken()
+09:10:27.994 [34mdebug[39m [e681fd01] #02 [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+09:10:27.995 [34mdebug[39m [e681fd01] #03 [CargoController] findAll()
+09:10:27.996 [34mdebug[39m [e681fd01] #04 [CargoService] findAll()
+09:10:27.996 [34mdebug[39m [e681fd01] #05 [CargoDAO] findAll()
+09:10:27.998 [32mhttp[39m [e681fd01] #06 [HTTP] request {"method":"GET","url":"/api/cargos","status":304,"durationMs":4.24}
+09:10:37.331 [34mdebug[39m [90e3a246] #01 [JwtMiddleware] validateToken()
+09:10:37.332 [34mdebug[39m [90e3a246] #02 [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+09:10:37.332 [34mdebug[39m [90e3a246] #03 [PermissaoAdminMiddleware] verificarPermissaoAdmin()
+09:10:37.332 [34mdebug[39m [90e3a246] #04 [CargoController] create()
+09:10:37.332 [34mdebug[39m [90e3a246] #05 [CargoService] create() {"nomeCargo":"Professor"}
+09:10:37.341 [34mdebug[39m [90e3a246] #06 [CargoDAO] create() {"nomeCargo":"Professor"}
+09:10:37.343 [32minfo[39m [90e3a246] #07 [CargoDAO] cargo inserido {"idCargo":"6adca03d2a76e707a576f167","nomeCargo":"Professor"}
+09:10:37.343 [32minfo[39m [90e3a246] #08 [CargoService] cargo criado {"idCargo":"6adca03d2a76e707a576f167","nomeCargo":"Professor","criadoPor":"helioesperidiao@gmail.com"}
+09:10:37.343 [32mhttp[39m [90e3a246] #09 [HTTP] request {"method":"POST","url":"/api/cargos","status":201,"durationMs":12.06}
+09:10:37.344 [34mdebug[39m [f3600fbe] #01 [JwtMiddleware] validateToken()
+09:10:37.345 [34mdebug[39m [f3600fbe] #02 [MeuTokenJWT] configurado {"alg":"HS256","iss":"http://localhost","aud":"http://localhost","duracaoSegundos":5184000}
+09:10:37.345 [34mdebug[39m [f3600fbe] #03 [CargoController] findAll()
+09:10:37.345 [34mdebug[39m [f3600fbe] #04 [CargoService] findAll()
+09:10:37.345 [34mdebug[39m [f3600fbe] #05 [CargoDAO] findAll()
+09:10:37.347 [32mhttp[39m [f3600fbe] #06 [HTTP] request {"method":"GET","url":"/api/cargos","status":200,"durationMs":2.25}
+09:12:55.356 [34mdebug[39m [Server] constructor()
+09:12:55.358 [34mdebug[39m [CargoRouter] constructor()
+09:12:55.358 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:12:55.360 [34mdebug[39m [FuncionarioRouter] constructor()
+09:12:55.360 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:12:55.360 [34mdebug[39m [Server] init()
+09:12:55.360 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+09:12:55.361 [34mdebug[39m [FuncionarioDAO] count()
+09:12:55.381 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+09:12:55.386 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+09:12:55.387 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+09:13:13.014 [34mdebug[39m [Server] constructor()
+09:13:13.016 [34mdebug[39m [CargoRouter] constructor()
+09:13:13.016 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:13:13.018 [34mdebug[39m [FuncionarioRouter] constructor()
+09:13:13.018 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:13:13.018 [34mdebug[39m [Server] init()
+09:13:13.019 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+09:13:13.019 [34mdebug[39m [FuncionarioDAO] count()
+09:13:13.039 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+09:13:13.044 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+09:13:13.046 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+09:13:31.856 [34mdebug[39m [Server] constructor()
+09:13:31.857 [34mdebug[39m [CargoRouter] constructor()
+09:13:31.858 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:13:31.859 [34mdebug[39m [FuncionarioRouter] constructor()
+09:13:31.859 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:13:31.860 [34mdebug[39m [Server] init()
+09:13:31.860 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+09:13:31.860 [34mdebug[39m [FuncionarioDAO] count()
+09:13:31.881 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+09:13:31.885 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+09:13:31.887 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+09:14:00.102 [34mdebug[39m [Server] constructor()
+09:14:00.104 [34mdebug[39m [CargoRouter] constructor()
+09:14:00.105 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:14:00.106 [34mdebug[39m [FuncionarioRouter] constructor()
+09:14:00.106 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:14:00.107 [34mdebug[39m [Server] init()
+09:14:00.107 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+09:14:00.107 [34mdebug[39m [FuncionarioDAO] count()
+09:14:00.129 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+09:14:00.134 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+09:14:00.135 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+09:14:05.366 [34mdebug[39m [Server] constructor()
+09:14:05.368 [34mdebug[39m [CargoRouter] constructor()
+09:14:05.368 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:14:05.370 [34mdebug[39m [FuncionarioRouter] constructor()
+09:14:05.370 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:14:05.370 [34mdebug[39m [Server] init()
+09:14:05.370 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+09:14:05.371 [34mdebug[39m [FuncionarioDAO] count()
+09:14:05.390 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+09:14:05.395 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+09:14:05.397 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000
+09:14:43.030 [34mdebug[39m [Server] constructor()
+09:14:43.032 [34mdebug[39m [CargoRouter] constructor()
+09:14:43.032 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:14:43.034 [34mdebug[39m [FuncionarioRouter] constructor()
+09:14:43.034 [34mdebug[39m [MongoDatabase] configurado {"uri":"mongodb://localhost:27017","database":"faltas_cti","maxPoolSize":50,"minPoolSize":10}
+09:14:43.034 [34mdebug[39m [Server] init()
+09:14:43.035 [34mdebug[39m [FuncionarioService] initializeDefaultAdmin()
+09:14:43.035 [34mdebug[39m [FuncionarioDAO] count()
+09:14:43.055 [32minfo[39m [MongoDatabase] conectado ao MongoDB {"database":"faltas_cti"}
+09:14:43.059 [32minfo[39m [FuncionarioService] já existem funcionários cadastrados; pulando criação do admin padrão
+09:14:43.061 [32minfo[39m [Server] servidor ouvindo em http://localhost:3000

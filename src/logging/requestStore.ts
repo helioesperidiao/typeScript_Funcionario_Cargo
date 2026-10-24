@@ -6,4 +6,5 @@ export interface RequestStore {
     step: number;
 }
 
+/** Mantém metadados da requisição disponíveis em chamadas assíncronas encadeadas. */
 export const requestStore = new AsyncLocalStorage<RequestStore>();

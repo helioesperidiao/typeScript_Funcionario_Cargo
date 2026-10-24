@@ -16,6 +16,10 @@ src/
 │   ├── ErrorResponse.ts
 │   ├── MeuTokenJWT.ts
 │   └── StandardResponse.ts
+├── logging/
+│   ├── HttpLogger.ts
+│   ├── Logger.ts
+│   └── requestStore.ts
 ├── middlewares/
 │   └── JwtMiddleware.ts
 ├── models/
@@ -27,11 +31,11 @@ src/
 │   ├── js/
 │   │   └── bootstrap.bundle.min.js
 │   ├── ApiService.js
-│   ├── cargos.html
+│   ├── Cargos.html
 │   ├── dashboard.html
 │   ├── favicon.ico
-│   ├── funcionarios.html
-│   └── login.html
+│   ├── Funcionarios.html
+│   └── Login.html
 ├── routers/
 │   ├── CargoRouter.ts
 │   └── FuncionarioRouter.ts
@@ -100,18 +104,20 @@ import { StandardResponse } from "../http/StandardResponse";
 import { Cargo } from "../models/Cargo";
 import { Funcionario } from "../models/Funcionario";
 import { ErrorResponse } from "../http/ErrorResponse";
+import { createLogger } from "../logging/Logger";
+
+const log = createLogger("CargoController");
 
 export class CargoController extends BaseController {
     private _cargoService: CargoService;
 
     constructor(cargoServiceDependency: CargoService) {
         super();
-        console.log("⬆️  CargoController.constructor()");
         this._cargoService = cargoServiceDependency;
     }
 
     public create = async (request: Request, response: Response): Promise<void> => {
-        console.log("🔵 CargoController.create()");
+        log.debug("create()");
 
         const funcionarioLogado: Funcionario = this.getFuncionarioLogado(request);
         const dados = this.requireBody(request, "cargo");
@@ -126,6 +132,7 @@ export class CargoController extends BaseController {
         const resultado = await this._cargoService.create(novoCargo, funcionarioLogado);
 
         if (!resultado) {
+            log.error("falha ao cadastrar cargo", { nomeCargo: novoCargo.nomeCargo });
             StandardResponse.error("Falha ao cadastrar novo Cargo", null, 500).send(response);
             return;
         }
@@ -139,19 +146,18 @@ export class CargoController extends BaseController {
     };
 
     public findAll = async (request: Request, response: Response): Promise<void> => {
-        console.log("🔵 CargoController.findAll()");
+        log.debug("findAll()");
         const funcionarioLogado: Funcionario = this.getFuncionarioLogado(request);
         const arrayCargos = await this._cargoService.findAll(funcionarioLogado);
         StandardResponse.success("Busca realizada com sucesso", { cargos: arrayCargos }).send(response);
     };
 
     public findById = async (request: Request, response: Response): Promise<void> => {
-        console.log("🔵 CargoController.findById()");
+        log.debug("findById()", { idCargo: request.params.idCargo });
         const funcionarioLogado: Funcionario = this.getFuncionarioLogado(request);
         const cargoId = request.params.idCargo.toString();
         const cargo = await this._cargoService.findById(cargoId, funcionarioLogado);
 
-        // ✅ Antes retornava 200 com cargos: null. Agora 404 é semântico.
         if (!cargo) {
             StandardResponse.notFound("Cargo não encontrado", { cargos: null }).send(response);
             return;
@@ -161,7 +167,7 @@ export class CargoController extends BaseController {
     };
 
     public update = async (request: Request, response: Response): Promise<void> => {
-        console.log("🔵 CargoController.update()");
+        log.debug("update()", { idCargo: request.params.idCargo });
 
         const funcionarioLogado: Funcionario = this.getFuncionarioLogado(request);
         const cargoId = request.params.idCargo.toString();
@@ -185,7 +191,7 @@ export class CargoController extends BaseController {
     };
 
     public delete = async (request: Request, response: Response): Promise<void> => {
-        console.log("🔵 CargoController.delete()");
+        log.debug("delete()", { idCargo: request.params.idCargo });
 
         const funcionarioLogado: Funcionario = this.getFuncionarioLogado(request);
 
@@ -203,12 +209,8 @@ export class CargoController extends BaseController {
         }
     };
 
-    /**
-     * Retorna o total de cargos cadastrados.
-     * 🔹 Rota PROTEGIDA por JWT (mantida assim pelo router).
-     */
     public count = async (request: Request, response: Response): Promise<void> => {
-        console.log("🔵 CargoController.count()");
+        log.debug("count()");
         const funcionarioLogado: Funcionario = this.getFuncionarioLogado(request);
         const total = await this._cargoService.count(funcionarioLogado);
         StandardResponse.success("Total de cargos obtido", { total }).send(response);
@@ -225,18 +227,20 @@ import { StandardResponse } from "../http/StandardResponse";
 import { Cargo } from "../models/Cargo";
 import { BaseController } from "./BaseController";
 import { ErrorResponse } from "../http/ErrorResponse";
+import { createLogger } from "../logging/Logger";
+
+const log = createLogger("FuncionarioController");
 
 export class FuncionarioController extends BaseController {
     private _funcionarioService: FuncionarioService;
 
     constructor(funcionarioServiceDependency: FuncionarioService) {
         super();
-        console.log("⬆️  FuncionarioController.constructor()");
         this._funcionarioService = funcionarioServiceDependency;
     }
 
     public login = async (request: Request, response: Response): Promise<void> => {
-        console.log("🔵 FuncionarioController.login()");
+        log.debug("login()");
 
         const dados = this.requireBody(request, "funcionario");
         if (!dados.email || !dados.senha) {
@@ -252,7 +256,7 @@ export class FuncionarioController extends BaseController {
     };
 
     public create = async (request: Request, response: Response): Promise<void> => {
-        console.log("🔵 FuncionarioController.create()");
+        log.debug("create()");
 
         const funcionarioLogado = this.getFuncionarioLogado(request);
         const dados = this.requireBody(request, "funcionario");
@@ -280,14 +284,14 @@ export class FuncionarioController extends BaseController {
     };
 
     public findAll = async (request: Request, response: Response): Promise<void> => {
-        console.log("🔵 FuncionarioController.findAll()");
+        log.debug("findAll()");
         const funcionarioLogado = this.getFuncionarioLogado(request);
         const listaFuncionarios = await this._funcionarioService.findAll(funcionarioLogado);
         StandardResponse.success("Executado com sucesso", { funcionarios: listaFuncionarios }).send(response);
     };
 
     public findById = async (request: Request, response: Response): Promise<void> => {
-        console.log("🔵 FuncionarioController.findById()");
+        log.debug("findById()", { idFuncionario: request.params.idFuncionario });
         const funcionarioLogado = this.getFuncionarioLogado(request);
         const idFuncionario = request.params.idFuncionario.toString();
         const funcionario = await this._funcionarioService.findById(idFuncionario, funcionarioLogado);
@@ -295,7 +299,7 @@ export class FuncionarioController extends BaseController {
     };
 
     public update = async (request: Request, response: Response): Promise<void> => {
-        console.log("🔵 FuncionarioController.update()");
+        log.debug("update()", { idFuncionario: request.params.idFuncionario });
 
         const funcionarioLogado = this.getFuncionarioLogado(request);
         const idFuncionario = request.params.idFuncionario.toString();
@@ -316,14 +320,13 @@ export class FuncionarioController extends BaseController {
         funcionario.email = dados.email;
         funcionario.recebeValeTransporte = dados.recebeValeTransporte;
 
-        // ✅ Só define a senha se foi enviada (evita apagar a senha atual)
+        // Só define a senha se foi enviada (evita apagar a senha atual)
         if (dados.senha !== undefined && dados.senha !== null && dados.senha !== "") {
             funcionario.senha = dados.senha;
         }
 
         const atualizou = await this._funcionarioService.updateFuncionario(funcionario, funcionarioLogado);
 
-        // ✅ Antes sempre respondia 200. Agora responde 404 quando não encontrou.
         if (!atualizou) {
             StandardResponse.notFound("Funcionário não encontrado para atualização", {
                 funcionario: { idFuncionario }
@@ -340,7 +343,7 @@ export class FuncionarioController extends BaseController {
     };
 
     public delete = async (request: Request, response: Response): Promise<void> => {
-        console.log(`🔵 FuncionarioController.delete(${request.params.idFuncionario})`);
+        log.debug("delete()", { idFuncionario: request.params.idFuncionario });
 
         const funcionarioLogado = this.getFuncionarioLogado(request);
         const idFuncionario = request.params.idFuncionario.toString();
@@ -361,14 +364,14 @@ export class FuncionarioController extends BaseController {
     };
 
     public count = async (request: Request, response: Response): Promise<void> => {
-        console.log("🔵 FuncionarioController.count()");
+        log.debug("count()");
         const funcionarioLogado = this.getFuncionarioLogado(request);
         const total = await this._funcionarioService.count(funcionarioLogado);
         StandardResponse.success("Total de funcionários obtido", { total }).send(response);
     };
 
     public countByCargoId = async (request: Request, response: Response): Promise<void> => {
-        console.log("🔵 FuncionarioController.countByCargoId()");
+        log.debug("countByCargoId()", { idCargo: request.params.idCargo });
         const funcionarioLogado = this.getFuncionarioLogado(request);
         const cargoId = request.params.idCargo.toString();
         const total = await this._funcionarioService.countByCargoId(cargoId, funcionarioLogado);
@@ -382,17 +385,18 @@ ARQUIVO: dao\CargoDAO.ts
 import { Collection, ObjectId, Filter, UpdateFilter, Document, OptionalId } from "mongodb";
 import { Cargo } from "../models/Cargo";
 import { MongoDatabase } from "../database/MongoDatabase";
+import { createLogger } from "../logging/Logger";
+
+const log = createLogger("CargoDAO");
 
 export class CargoDAO {
     private _database: MongoDatabase;
     private _indexesPromise: Promise<void> | null = null;
 
     constructor(dbInstance: MongoDatabase) {
-        console.log("⬆️ CargoDAO.constructor()");
         this._database = dbInstance;
     }
 
-    // ✅ Índice único case-insensitive em nomeCargo
     private async ensureIndexes(collection: Collection<Document>): Promise<void> {
         if (!this._indexesPromise) {
             this._indexesPromise = (async () => {
@@ -406,7 +410,7 @@ export class CargoDAO {
                         }
                     );
                 } catch (err: any) {
-                    console.warn("⚠️ Índice único de nomeCargo não criado:", err?.message);
+                    log.warn("índice único de nomeCargo não criado", { error: err?.message });
                 }
             })();
         }
@@ -425,7 +429,7 @@ export class CargoDAO {
     }
 
     public async create(cargo: Cargo): Promise<Cargo> {
-        console.log("🟢 CargoDAO.create()");
+        log.debug("create()", { nomeCargo: cargo.nomeCargo });
         const collection = await this.getCollection();
         const doc: OptionalId<Document> = { nomeCargo: cargo.nomeCargo };
         const result = await collection.insertOne(doc);
@@ -433,36 +437,39 @@ export class CargoDAO {
             throw new Error("Falha ao inserir cargo");
         }
         cargo.idCargo = result.insertedId.toString();
+        log.info("cargo inserido", { idCargo: cargo.idCargo, nomeCargo: cargo.nomeCargo });
         return cargo;
     }
 
     public async delete(objCargoModel: Cargo): Promise<boolean> {
-        console.log("🟢 CargoDAO.delete(" + objCargoModel.idCargo + ")");
+        log.debug("delete()", { idCargo: objCargoModel.idCargo });
         const collection = await this.getCollection();
         const filter: Filter<Document> = { _id: new ObjectId(objCargoModel.idCargo) };
         const result = await collection.deleteOne(filter);
-        return result.deletedCount > 0;
+        const ok = result.deletedCount > 0;
+        if (ok) log.info("cargo removido", { idCargo: objCargoModel.idCargo });
+        else log.warn("cargo não encontrado para remoção", { idCargo: objCargoModel.idCargo });
+        return ok;
     }
 
     public async update(objCargoModel: Cargo): Promise<boolean> {
-        console.log("🟢 CargoDAO.update()");
+        log.debug("update()", { idCargo: objCargoModel.idCargo });
         const collection = await this.getCollection();
         const filter: Filter<Document> = { _id: new ObjectId(objCargoModel.idCargo) };
         const update: UpdateFilter<Document> = { $set: { nomeCargo: objCargoModel.nomeCargo } };
         const result = await collection.updateOne(filter, update);
-        // ✅ matchedCount: documento existe, mesmo sem mudança
         return result.matchedCount > 0;
     }
 
     public async findAll(): Promise<Cargo[]> {
-        console.log("🟢 CargoDAO.findAll()");
+        log.debug("findAll()");
         const collection = await this.getCollection();
         const docs = await collection.find({}).toArray();
         return docs.map(doc => this.toCargo(doc));
     }
 
     public async findById(idCargo: string): Promise<Cargo | null> {
-        console.log("🟢 CargoDAO.findById()");
+        log.debug("findById()", { idCargo });
         const collection = await this.getCollection();
         const filter: Filter<Document> = { _id: new ObjectId(idCargo) };
         const doc = await collection.findOne(filter);
@@ -470,7 +477,6 @@ export class CargoDAO {
     }
 
     public async findByField(field: string, value: any): Promise<Cargo[]> {
-        console.log(`🟢 CargoDAO.findByField() - Campo: ${field}, Valor: ${value}`);
         const allowedFields = ["_id", "nomeCargo"];
         if (!allowedFields.includes(field)) {
             throw new Error(`Campo inválido para busca: ${field}`);
@@ -482,7 +488,6 @@ export class CargoDAO {
         if (field === "_id") {
             filter = { _id: new ObjectId(value) };
         } else if (field === "nomeCargo") {
-            // ✅ Busca case-insensitive, correspondência exata, com escape de regex
             filter = {
                 nomeCargo: { $regex: `^${this.escapeRegex(String(value))}$`, $options: "i" }
             };
@@ -495,7 +500,7 @@ export class CargoDAO {
     }
 
     public async count(): Promise<number> {
-        console.log("🟢 CargoDAO.count()");
+        log.debug("count()");
         const collection = await this.getCollection();
         return await collection.countDocuments();
     }
@@ -515,17 +520,18 @@ import { Collection, ObjectId, Filter, UpdateFilter, Document, OptionalId } from
 import { Funcionario } from "../models/Funcionario";
 import { Cargo } from "../models/Cargo";
 import { MongoDatabase } from "../database/MongoDatabase";
+import { createLogger } from "../logging/Logger";
+
+const log = createLogger("FuncionarioDAO");
 
 export class FuncionarioDAO {
     private _database: MongoDatabase;
     private _indexesPromise: Promise<void> | null = null;
 
     constructor(dbInstance: MongoDatabase) {
-        console.log("⬆️ FuncionarioDAO.constructor()");
         this._database = dbInstance;
     }
 
-    // ✅ Cria índice único de email (uma vez por processo)
     private async ensureIndexes(collection: Collection<Document>): Promise<void> {
         if (!this._indexesPromise) {
             this._indexesPromise = (async () => {
@@ -535,7 +541,7 @@ export class FuncionarioDAO {
                         { unique: true, name: "email_unique" }
                     );
                 } catch (err: any) {
-                    console.warn("⚠️ Índice único de email não criado:", err?.message);
+                    log.warn("índice único de email não criado", { error: err?.message });
                 }
             })();
         }
@@ -552,7 +558,7 @@ export class FuncionarioDAO {
     // ======================== CRUD ========================
 
     public async create(objFuncionarioModel: Funcionario): Promise<Funcionario> {
-        console.log("🟢 FuncionarioDAO.create()");
+        log.debug("create()", { email: objFuncionarioModel.email });
         const collection = await this.getCollection();
 
         if (!objFuncionarioModel.cargo) {
@@ -575,19 +581,27 @@ export class FuncionarioDAO {
         }
 
         objFuncionarioModel.idFuncionario = result.insertedId.toHexString();
+        log.info("funcionário inserido", {
+            idFuncionario: objFuncionarioModel.idFuncionario,
+            email: objFuncionarioModel.email,
+            cargoId: objFuncionarioModel.cargo.idCargo,
+        });
         return objFuncionarioModel;
     }
 
     public async delete(objFuncionarioModel: Funcionario): Promise<boolean> {
-        console.log(`🟢 FuncionarioDAO.delete(${objFuncionarioModel.idFuncionario})`);
+        log.debug("delete()", { idFuncionario: objFuncionarioModel.idFuncionario });
         const collection = await this.getCollection();
         const filter: Filter<Document> = { _id: new ObjectId(objFuncionarioModel.idFuncionario) };
         const result = await collection.deleteOne(filter);
-        return result.deletedCount > 0;
+        const ok = result.deletedCount > 0;
+        if (ok) log.info("funcionário removido", { idFuncionario: objFuncionarioModel.idFuncionario });
+        else log.warn("funcionário não encontrado para remoção", { idFuncionario: objFuncionarioModel.idFuncionario });
+        return ok;
     }
 
     public async update(objFuncionarioModel: Funcionario): Promise<boolean> {
-        console.log(`🟢 FuncionarioDAO.update(${objFuncionarioModel.idFuncionario})`);
+        log.debug("update()", { idFuncionario: objFuncionarioModel.idFuncionario });
         const collection = await this.getCollection();
         const filter: Filter<Document> = { _id: new ObjectId(objFuncionarioModel.idFuncionario) };
 
@@ -608,14 +622,15 @@ export class FuncionarioDAO {
 
         const update: UpdateFilter<Document> = { $set: updateData };
         const result = await collection.updateOne(filter, update);
-        // ✅ matchedCount: documento existe, mesmo que nada mude
-        return result.matchedCount > 0;
+        const matched = result.matchedCount > 0;
+        if (!matched) log.warn("funcionário não encontrado para atualização", { idFuncionario: objFuncionarioModel.idFuncionario });
+        return matched;
     }
 
     // ======================== CONSULTAS ========================
 
     public async findAll(): Promise<Funcionario[]> {
-        console.log("🟢 FuncionarioDAO.findAll()");
+        log.debug("findAll()");
         const collection = await this.getCollection();
 
         const pipeline = [
@@ -634,7 +649,6 @@ export class FuncionarioDAO {
                     idFuncionario: "$_id",
                     nomeFuncionario: 1,
                     email: 1,
-                    // ✅ senha NÃO é projetada (evita vazamento)
                     recebeValeTransporte: 1,
                     cargo: {
                         idCargo: "$cargoInfo._id",
@@ -649,7 +663,7 @@ export class FuncionarioDAO {
     }
 
     public async findById(idFuncionario: string): Promise<Funcionario | null> {
-        console.log(`🟢 FuncionarioDAO.findById(${idFuncionario})`);
+        log.debug("findById()", { idFuncionario });
         const collection = await this.getCollection();
         const filter: Filter<Document> = { _id: new ObjectId(idFuncionario) };
 
@@ -685,7 +699,6 @@ export class FuncionarioDAO {
     }
 
     public async findByField(field: string, value: any): Promise<Funcionario[]> {
-        console.log(`🟢 FuncionarioDAO.findByField() - Campo: ${field}, Valor: ${value}`);
         const allowedFields = ["_id", "nomeFuncionario", "email", "recebeValeTransporte", "cargoId"];
         if (!allowedFields.includes(field)) {
             throw new Error(`Campo inválido para busca: ${field}`);
@@ -731,7 +744,7 @@ export class FuncionarioDAO {
 
     /** Usado apenas no login: inclui a senha (hash) para comparação com bcrypt. */
     public async findByEmail(email: string): Promise<Funcionario | null> {
-        console.log(`🟢 FuncionarioDAO.findByEmail(${email})`);
+        log.debug("findByEmail()", { email });
         const collection = await this.getCollection();
 
         const pipeline = [
@@ -751,7 +764,7 @@ export class FuncionarioDAO {
                     idFuncionario: "$_id",
                     nomeFuncionario: 1,
                     email: 1,
-                    senha: 1,  // ✅ só aqui a senha é retornada
+                    senha: 1,
                     recebeValeTransporte: 1,
                     cargo: {
                         idCargo: "$cargoInfo._id",
@@ -769,13 +782,13 @@ export class FuncionarioDAO {
     // ======================== CONTAGENS ========================
 
     public async count(): Promise<number> {
-        console.log("🟢 FuncionarioDAO.count()");
+        log.debug("count()");
         const collection = await this.getCollection();
         return await collection.countDocuments();
     }
 
     public async countByCargoId(cargoId: string): Promise<number> {
-        console.log(`🟢 FuncionarioDAO.countByCargoId(${cargoId})`);
+        log.debug("countByCargoId()", { cargoId });
         const collection = await this.getCollection();
         return await collection.countDocuments({ cargoId: new ObjectId(cargoId) });
     }
@@ -804,81 +817,21 @@ ARQUIVO: database\MongoDatabase.ts
 --------------------------------------------------------------------------------
 import { MongoClient, Db, MongoClientOptions } from "mongodb";
 import dotenv from "dotenv";
+import { createLogger } from "../logging/Logger";
 
-// Carrega variáveis de ambiente do arquivo .env
 dotenv.config();
 
-/**
- * Classe responsável por gerenciar a conexão com o MongoDB.
- * 
- * - Suporta passagem de URI, nome do banco e opções via construtor.
- * - Prioriza variáveis de ambiente (se definidas) sobre os valores padrão.
- * - Usa atributos privados para segurança.
- * - Mantém um cliente singleton (compartilhado entre todas as instâncias).
- * - Fornece o objeto Db para operações no banco.
- * 
- * @example
- * // Configuração via .env (recomendado)
- * // .env:
- * // MONGO_URI=mongodb://localhost:27017
- * // MONGO_DATABASE=meu_banco
- * // MONGO_MAX_POOL_SIZE=100
- * 
- * const db = new MongoDatabase();
- * await db.connect();
- * 
- * // Ou passando configurações diretamente (sobrescreve .env)
- * const db = new MongoDatabase({
- *   uri: "mongodb://localhost:27017",
- *   database: "gestao_rh"
- * });
- */
-export class MongoDatabase {
-    // ======================== SINGLETON ========================
+const log = createLogger("MongoDatabase");
 
-    /** Cliente singleton compartilhado entre todas as instâncias. */
+export class MongoDatabase {
     private static _client: MongoClient | null = null;
-    /** Instância do banco de dados singleton. */
     private static _db: Db | null = null;
 
-    // ======================== CONFIGURAÇÃO ========================
-
-    /** URI de conexão com o MongoDB. */
     private _uri: string;
-    /** Nome do banco de dados a ser utilizado. */
     private _databaseName: string;
-    /** Opções de configuração do cliente MongoDB. */
     private _options: MongoClientOptions;
 
-    // ======================== CONSTRUTOR ========================
-
-    /**
-     * Construtor da classe MongoDatabase.
-     * 
-     * As configurações são carregadas na seguinte ordem de prioridade:
-     * 1. Valores passados no objeto `config`.
-     * 2. Variáveis de ambiente (ex: `MONGO_URI`, `MONGO_DATABASE`, `MONGO_MAX_POOL_SIZE`, etc.).
-     * 3. Valores padrão (fallback).
-     * 
-     * @param config - Objeto opcional para sobrescrever as variáveis de ambiente.
-     * @param config.uri - URI do MongoDB (padrão: variável `MONGO_URI` ou "mongodb://localhost:27017").
-     * @param config.database - Nome do banco de dados (padrão: variável `MONGO_DATABASE` ou "faltas_cti").
-     * @param config.options - Opções adicionais do MongoClient (ex: maxPoolSize, minPoolSize, etc.).
-     *                        As opções podem ser definidas via variáveis de ambiente com prefixo `MONGO_`.
-     * 
-     * @example
-     * // Usando .env
-     * const db = new MongoDatabase();
-     * 
-     * // Sobrescrevendo via construtor
-     * const db = new MongoDatabase({
-     *   uri: "mongodb://localhost:27017",
-     *   database: "gestao_rh",
-     *   options: { maxPoolSize: 100 }
-     * });
-     */
     constructor(config: { uri?: string; database?: string; options?: MongoClientOptions } = {}) {
-        // Carrega variáveis de ambiente
         const envUri = process.env.MONGO_URI;
         const envDatabase = process.env.MONGO_DATABASE;
         const envMaxPoolSize = parseInt(process.env.MONGO_MAX_POOL_SIZE || '');
@@ -886,112 +839,55 @@ export class MongoDatabase {
         const envConnectTimeout = parseInt(process.env.MONGO_CONNECT_TIMEOUT_MS || '');
         const envSocketTimeout = parseInt(process.env.MONGO_SOCKET_TIMEOUT_MS || '');
 
-        // Define URI (prioridade: config.uri > envUri > padrão)
         this._uri = config.uri || envUri || "mongodb://localhost:27017";
-
-        // Define database (prioridade: config.database > envDatabase > padrão)
         this._databaseName = config.database || envDatabase || "faltas_cti";
 
-        // Define opções (prioridade: config.options > env > padrão)
         this._options = {
             maxPoolSize: config.options?.maxPoolSize || (isNaN(envMaxPoolSize) ? 50 : envMaxPoolSize),
             minPoolSize: config.options?.minPoolSize || (isNaN(envMinPoolSize) ? 10 : envMinPoolSize),
             connectTimeoutMS: config.options?.connectTimeoutMS || (isNaN(envConnectTimeout) ? 5000 : envConnectTimeout),
             socketTimeoutMS: config.options?.socketTimeoutMS || (isNaN(envSocketTimeout) ? 45000 : envSocketTimeout),
-            ...config.options, // Permite sobrescrever outras opções não mapeadas
+            ...config.options,
         };
 
-        console.log(`🔧 MongoDatabase configurado:
-  URI: ${this._uri}
-  Database: ${this._databaseName}
-  MaxPoolSize: ${this._options.maxPoolSize}
-  MinPoolSize: ${this._options.minPoolSize}
-  ConnectTimeout: ${this._options.connectTimeoutMS}ms
-  SocketTimeout: ${this._options.socketTimeoutMS}ms`);
+        log.debug("configurado", {
+            uri: this._uri,
+            database: this._databaseName,
+            maxPoolSize: this._options.maxPoolSize,
+            minPoolSize: this._options.minPoolSize,
+        });
     }
 
-    // ======================== MÉTODOS PÚBLICOS ========================
-
-    /**
-     * Conecta ao MongoDB e retorna o cliente.
-     * 
-     * Se o cliente já existir (singleton), reutiliza a conexão existente.
-     * Em caso de erro, encerra o processo com código 1.
-     * 
-     * @returns Cliente MongoDB conectado.
-     * @throws {Error} Se a conexão falhar (o processo é encerrado).
-     * 
-     * @example
-     * const client = await db.connect();
-     * console.log(client.topology.s.description);
-     */
     public async connect(): Promise<MongoClient> {
         if (!MongoDatabase._client) {
             try {
                 MongoDatabase._client = new MongoClient(this._uri, this._options);
                 await MongoDatabase._client.connect();
-                console.log("⬆️ Conectado ao MongoDB com sucesso!");
-
-                // Inicializa o banco de dados
                 MongoDatabase._db = MongoDatabase._client.db(this._databaseName);
+                log.info("conectado ao MongoDB", { database: this._databaseName });
             } catch (error: any) {
-                console.error("❌ Falha ao conectar ao MongoDB:", error.message);
+                log.error("falha ao conectar ao MongoDB", { error: error.message });
                 process.exit(1);
             }
         }
         return MongoDatabase._client;
     }
 
-    /**
-     * Retorna o cliente MongoDB já existente ou cria uma nova conexão.
-     * 
-     * @returns Cliente MongoDB ativo (conectado).
-     * 
-     * @example
-     * const client = await db.getClient();
-     */
     public async getClient(): Promise<MongoClient> {
         return await this.connect();
     }
 
-    /**
-     * Retorna a instância do banco de dados (Db) para operações.
-     * 
-     * Garante que a conexão esteja ativa antes de retornar o objeto Db.
-     * 
-     * @returns Objeto Db do MongoDB.
-     * 
-     * @example
-     * const db = await dbConnection.getDb();
-     * const colecao = db.collection("funcionarios");
-     * const docs = await colecao.find({}).toArray();
-     */
     public async getDb(): Promise<Db> {
-        await this.connect(); // Garante que o cliente está conectado
+        await this.connect();
         return MongoDatabase._db!;
     }
 
-    /**
-     * Fecha a conexão com o MongoDB.
-     * 
-     * Útil para encerrar a aplicação de forma limpa, liberando recursos.
-     * Após o fechamento, o singleton é reiniciado (cliente e db null).
-     * 
-     * @returns Promise void.
-     * 
-     * @example
-     * // Em um encerramento gracioso da aplicação
-     * process.on('SIGTERM', async () => {
-     *   await db.close();
-     *   process.exit(0);
-     * });
-     */
     public async close(): Promise<void> {
         if (MongoDatabase._client) {
             await MongoDatabase._client.close();
             MongoDatabase._client = null;
             MongoDatabase._db = null;
-            console.log("⬆️ Conexão com MongoDB fechada.");
+            log.info("conexão com MongoDB fechada");
         }
     }
 }
@@ -1105,6 +1001,9 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { Cargo } from '../models/Cargo';
 import { Funcionario } from '../models/Funcionario';
+import { createLogger } from '../logging/Logger';
+
+const log = createLogger("MeuTokenJWT");
 
 export class MeuTokenJWT {
     private _key: string;
@@ -1124,17 +1023,16 @@ export class MeuTokenJWT {
         this._sub = process.env.JWT_SUBJECT || "acesso_sistema";
         this._duracaoToken = parseInt(process.env.JWT_EXPIRES_IN_SECONDS || '', 10) || (3600 * 24 * 60);
 
-        console.log(`🔐 MeuTokenJWT configurado:
-  Algoritmo: ${this._alg}
-  Tipo: ${this._type}
-  Emissor: ${this._iss}
-  Audiência: ${this._aud}
-  Assunto: ${this._sub}
-  Duração: ${this._duracaoToken}s (${Math.round(this._duracaoToken / 86400)} dias)`);
+        log.debug("configurado", {
+            alg: this._alg,
+            iss: this._iss,
+            aud: this._aud,
+            duracaoSegundos: this._duracaoToken,
+        });
     }
 
     public gerarToken = (funcionario: Funcionario): string => {
-        console.log("🔷  MeuTokenJWT.gerarToken()");
+        log.debug("gerarToken()", { idFuncionario: funcionario.idFuncionario });
         const headers = { alg: this._alg, typ: this._type };
 
         const payload = {
@@ -1161,16 +1059,14 @@ export class MeuTokenJWT {
     };
 
     public validarToken = (stringToken: string): Funcionario | null => {
-        console.log("🔷  MeuTokenJWT.validarToken()");
         if (!stringToken || stringToken.trim() === "") {
-            console.error("Token não fornecido ou vazio");
+            log.debug("token não fornecido ou vazio");
             return null;
         }
 
         const token = stringToken.replace("Bearer ", "").trim();
 
         try {
-            // ✅ issuer/audience agora são validados
             const decoded: any = jwt.verify(token, this._key, {
                 algorithms: [this._alg as jwt.Algorithm],
                 issuer: this._iss,
@@ -1192,11 +1088,11 @@ export class MeuTokenJWT {
             return funcionario;
         } catch (err) {
             if (err instanceof jwt.TokenExpiredError) {
-                console.error("Token expirado");
+                log.warn("token expirado");
             } else if (err instanceof jwt.JsonWebTokenError) {
-                console.error("Token inválido");
+                log.warn("token inválido");
             } else {
-                console.error("Erro geral", err);
+                log.error("erro ao validar token", { error: err });
             }
             return null;
         }
@@ -1307,61 +1203,146 @@ ARQUIVO: index.ts
 --------------------------------------------------------------------------------
 // ============================================================================
 // src/index.ts
-// PONTO DE ENTRADA DA APLICAÇÃO
 // ============================================================================
-
-// Carrega as variáveis de ambiente do arquivo .env antes de qualquer outro módulo
 import dotenv from 'dotenv';
-dotenv.config(); // Deve ser o primeiro comando para garantir que process.env esteja populado
+dotenv.config();
 
-// Importa a classe principal do servidor (depende de process.env)
 import { Server } from "./Server";
+import { createLogger } from "./logging/Logger";
 
-/**
- * Função assíncrona que inicializa e inicia o servidor.
- * 
- * Este é o ponto de entrada da aplicação. Ela:
- * 1. Define a porta com base na variável de ambiente PORT ou fallback para 3000.
- * 2. Instancia o servidor com a porta definida.
- * 3. Aguarda a inicialização completa do servidor (conexão com banco, middlewares, rotas).
- * 4. Inicia a escuta HTTP.
- * 
- * Caso ocorra qualquer erro durante a inicialização, a função captura a exceção,
- * exibe uma mensagem no console e encerra o processo com código de erro (1).
- * 
- * @example
- * // Execução padrão
- * await startServer();
- * 
- * @returns {Promise<void>} Não retorna valor.
- * 
- * @throws {Error} Em caso de falha na inicialização, o processo é encerrado.
- */
+const log = createLogger("Bootstrap");
+
 const startServer = async (): Promise<void> => {
     try {
-        // Define a porta: prioriza a variável de ambiente PORT, senão usa 3000
-        // Garante que PORT seja um number (ou fallback para 3000 se inválido)
         const rawPort = process.env.PORT;
         const parsedPort = rawPort ? parseInt(rawPort, 10) : NaN;
         const PORT: number = !Number.isNaN(parsedPort) ? parsedPort : 3000;
 
-        // Instancia o servidor com a porta configurada
         const server = new Server(PORT);
-
-        // Inicializa o servidor (conecta ao banco, configura middlewares, rotas, etc.)
         await server.init();
-
-        // Inicia o servidor HTTP na porta definida
         server.run();
     } catch (error) {
-        // Em caso de erro, exibe mensagem e encerra o processo
-        console.error("❌ Falha ao iniciar o servidor:", error);
-        process.exit(1); // Código 1 indica erro
+        log.error("falha ao iniciar o servidor", { error });
+        process.exit(1);
     }
 };
 
-// Executa a função de inicialização (top-level await em módulos ES é permitido)
 startServer();
+
+--------------------------------------------------------------------------------
+ARQUIVO: logging\HttpLogger.ts
+--------------------------------------------------------------------------------
+// src/logging/HttpLogger.ts
+import { Request, Response, NextFunction } from "express";
+import { randomUUID } from "crypto";
+import { createLogger } from "./Logger";
+import { requestStore } from "./requestStore";
+
+const log = createLogger("HTTP");
+
+const STATIC_EXTENSIONS = /\.(html?|css|js|mjs|map|ico|png|jpe?g|gif|svg|webp|woff2?|ttf|eot|otf|pdf|txt|xml|json)$/i;
+
+const isStaticAsset = (req: Request): boolean => {
+    if (req.method !== "GET" && req.method !== "HEAD") return false;
+    return STATIC_EXTENSIONS.test(req.path);
+};
+
+export const httpLogger = (req: Request, res: Response, next: NextFunction): void => {
+    if (isStaticAsset(req)) {
+        return next();
+    }
+
+    const requestId = randomUUID().slice(0, 8);
+    res.setHeader("X-Request-Id", requestId);
+
+    const start = process.hrtime.bigint();
+
+    res.on("finish", () => {
+        const durationMs = Number(process.hrtime.bigint() - start) / 1e6;
+        const meta = {
+            method: req.method,
+            url: req.originalUrl,
+            status: res.statusCode,
+            durationMs: Number(durationMs.toFixed(2)),
+        };
+
+        if (res.statusCode >= 500) log.error("request failed", meta);
+        else if (res.statusCode >= 400) log.warn("request error", meta);
+        else log.http("request", meta);
+    });
+
+    // Abre o contexto — tudo que rodar a partir de next() vê o mesmo requestId
+    requestStore.run({ requestId, step: 0 }, () => next());
+
+};
+
+--------------------------------------------------------------------------------
+ARQUIVO: logging\Logger.ts
+--------------------------------------------------------------------------------
+// src/logging/Logger.ts
+import 'dotenv/config';
+import winston from "winston";
+import { requestStore } from "./requestStore";
+
+const isProduction = process.env.NODE_ENV === "production";
+const logLevel = process.env.LOG_LEVEL || (isProduction ? "info" : "debug");
+
+// Injeta requestId + número de sequência em cada linha do request
+const injectRequestId = winston.format((info) => {
+    const ctx = requestStore.getStore();
+    if (ctx) {
+        info.requestId = ctx.requestId;
+        ctx.step += 1;
+        info.step = String(ctx.step).padStart(2, "0");
+    }
+    return info;
+});
+
+export const Logger = winston.createLogger({
+    level: logLevel,
+    levels: { error: 0, warn: 1, info: 2, http: 3, debug: 4 },
+    format: isProduction
+        ? winston.format.combine(
+              injectRequestId(),
+              winston.format.timestamp(),
+              winston.format.errors({ stack: true }),
+              winston.format.json()
+          )
+        : winston.format.combine(
+              injectRequestId(),
+              winston.format.colorize({ level: true }),
+              winston.format.timestamp({ format: "HH:mm:ss.SSS" }),
+              winston.format.printf((info: any) => {
+                  const { level, message, timestamp, layer, requestId, step, ...meta } = info;
+                  const rid = requestId ? `[${requestId}] ` : "";
+                  const stepTag = step ? `#${step} ` : "";
+                  const layerTag = layer ? `[${layer}]` : "";
+                  const extra = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : "";
+                  return `${timestamp} ${level} ${rid}${stepTag}${layerTag} ${message}${extra}`;
+              })
+          ),
+    transports: [
+        new winston.transports.Console(),
+        new winston.transports.File({ filename: "logs/app.log" }),
+        new winston.transports.File({ filename: "logs/error.log", level: "error" }),
+    ],
+    exitOnError: false,
+});
+
+export const createLogger = (layer: string) => Logger.child({ layer });
+
+--------------------------------------------------------------------------------
+ARQUIVO: logging\requestStore.ts
+--------------------------------------------------------------------------------
+// src/logging/requestStore.ts
+import { AsyncLocalStorage } from "async_hooks";
+
+export interface RequestStore {
+    requestId: string;
+    step: number;
+}
+
+export const requestStore = new AsyncLocalStorage<RequestStore>();
 
 --------------------------------------------------------------------------------
 ARQUIVO: middlewares\JwtMiddleware.ts
@@ -1370,63 +1351,25 @@ import { Request, Response, NextFunction } from 'express';
 import { MeuTokenJWT } from '../http/MeuTokenJWT';
 import { ErrorResponse } from '../http/ErrorResponse';
 import { Funcionario } from '../models/Funcionario';
+import { createLogger } from '../logging/Logger';
 
+const log = createLogger("JwtMiddleware");
 
-/**
- * Middleware para validação de tokens JWT em requisições.
- * 
- * Este middleware intercepta requisições, extrai o token do header `Authorization`,
- * valida-o e, se válido, injeta o objeto `Funcionario` decodificado na requisição
- * para uso em controllers e serviços subsequentes.
- * 
- * @example
- * // Uso em uma rota
- * router.get("/protegido", jwtMiddleware.validateToken, (req, res) => {
- *   const funcionario = req.funcionarioLogado;
- *   // ... lógica protegida
- * });
- * 
- * @example
- * // Lançando erro caso o token seja inválido
- * // O erro será capturado pelo middleware global de erros
- */
 export class JwtMiddleware {
-    /**
-     * Valida o token JWT presente no header `Authorization` da requisição.
-     * 
-     * Fluxo:
-     * 1. Obtém o header `authorization` da requisição.
-     * 2. Instancia a classe `MeuTokenJWT`.
-     * 3. Valida e decodifica o token usando `MeuTokenJWT.validarToken()`.
-     * 4. Se o token for válido:
-     *    - Injeta o objeto `Funcionario` na propriedade `funcionarioLogado` da requisição.
-     *    - Chama `next()` para prosseguir ao próximo middleware/controller.
-     * 5. Se o token for inválido ou não fornecido:
-     *    - Lança um `ErrorResponse` com status 401 (Unauthorized).
-     * 
-     * @param {Request} request - Objeto de requisição do Express.
-     * @param {Response} _response - Objeto de resposta do Express (não utilizado).
-     * @param {NextFunction} next - Função para passar o controle ao próximo middleware.
-     * @throws {ErrorResponse} Lança erro 401 se o token for inválido ou ausente.
-     * 
-     * @example
-     * // Middleware aplicado a uma rota
-     * app.get("/perfil", jwtMiddleware.validateToken, perfilController);
-     */
     public validateToken = (request: Request, _response: Response, next: NextFunction): void => {
-        console.log("🔷 JwtMiddleware.validateToken()");
-        const authorization = request.headers.authorization;
+        log.debug("validateToken()");
 
+        const authorization = request.headers.authorization;
         const jwt = new MeuTokenJWT();
         const funcionario: Funcionario | null = jwt.validarToken(authorization as string);
 
-        if (funcionario) {
-            // Injeta o funcionário decodificado na requisição para uso posterior
-            (request as any).funcionarioLogado = funcionario;
-            next();
-        } else {
+        if (!funcionario) {
+            log.warn("token inválido ou ausente");
             throw new ErrorResponse(401, "Token inválido");
         }
+
+        (request as any).funcionarioLogado = funcionario;
+        next();
     };
 }
 
@@ -1435,64 +1378,16 @@ ARQUIVO: models\Cargo.ts
 --------------------------------------------------------------------------------
 import { ObjectId } from "mongodb";
 
-/**
- * Representa a entidade Cargo do sistema.
- * 
- * Encapsula os dados de um cargo, garantindo a integridade dos atributos
- * por meio de validações nos setters:
- * - `idCargo`: deve ser um ObjectId válido do MongoDB (24 caracteres hexadecimais).
- * - `nomeCargo`: deve ser uma string não vazia com pelo menos 3 caracteres e no máximo 64.
- * 
- * @example
- * // Criar uma instância e definir valores válidos
- * const cargo = new Cargo();
- * cargo.idCargo = "507f1f77bcf86cd799439011";
- * cargo.nomeCargo = "Administrador";
- * 
- * @example
- * // Serialização para JSON (usando o método toJSON)
- * console.log(JSON.stringify(cargo));
- * // Saída: {"idCargo":"507f1f77bcf86cd799439011","nomeCargo":"Administrador"}
- */
 export class Cargo {
     private _idCargo: string = '';
     private _nomeCargo: string = '';
 
-    /**
-     * Construtor da classe Cargo.
-     * 
-     * Inicializa uma nova instância de Cargo com valores padrão vazios.
-     * Os valores devem ser definidos posteriormente através dos setters.
-     * 
-     * @example
-     * const cargo = new Cargo();
-     */
-    constructor() {
-        console.log("⬆️  Cargo.constructor()");
-    }
+    constructor() {}
 
-    /**
-     * Obtém o identificador único do cargo.
-     * 
-     * @returns {string} ID do cargo (string hex do ObjectId).
-     */
     get idCargo(): string {
         return this._idCargo;
     }
 
-    /**
-     * Define o identificador único do cargo.
-     * 
-     * 🔹 Regra de domínio: deve ser um ObjectId válido do MongoDB.
-     * 
-     * @param {string} value - ID do cargo no formato hexadecimal de 24 caracteres.
-     * @throws {Error} Lança erro se o valor for vazio, nulo ou não for um ObjectId válido.
-     * 
-     * @example
-     * cargo.idCargo = "507f1f77bcf86cd799439011"; // ✅ válido
-     * cargo.idCargo = "123";                       // ❌ lança erro
-     * cargo.idCargo = "";                          // ❌ lança erro
-     */
     set idCargo(value: string) {
         if (!value) {
             throw new Error("idCargo é obrigatório.");
@@ -1503,33 +1398,10 @@ export class Cargo {
         this._idCargo = value;
     }
 
-    /**
-     * Obtém o nome do cargo.
-     * 
-     * @returns {string} Nome do cargo.
-     */
     get nomeCargo(): string {
         return this._nomeCargo;
     }
 
-    /**
-     * Define o nome do cargo.
-     * 
-     * 🔹 Regra de domínio:
-     * - Deve ser uma string não vazia.
-     * - Deve ter pelo menos 3 caracteres.
-     * - Deve ter no máximo 64 caracteres.
-     * - Espaços em branco no início/fim são removidos automaticamente.
-     * 
-     * @param {string} value - Nome do cargo.
-     * @throws {Error} Lança erro se não for string, estiver vazio ou não atender ao tamanho mínimo/máximo.
-     * 
-     * @example
-     * cargo.nomeCargo = "Gerente";      // ✅ válido
-     * cargo.nomeCargo = "  Analista  "; // ✅ válido (trim será aplicado)
-     * cargo.nomeCargo = "AB";           // ❌ lança erro (menos de 3 caracteres)
-     * cargo.nomeCargo = null;           // ❌ lança erro
-     */
     set nomeCargo(value: string) {
         if (typeof value !== "string") {
             throw new Error("nomeCargo deve ser uma string.");
@@ -1544,23 +1416,6 @@ export class Cargo {
         this._nomeCargo = nome;
     }
 
-    /**
-     * Controla a serialização da instância para JSON.
-     * 
-     * Remove os underlines dos campos privados, retornando um objeto
-     * com as chaves `idCargo` e `nomeCargo`.
-     * 
-     * Este método é chamado automaticamente pelo `JSON.stringify()`.
-     * 
-     * @returns {Object} Objeto com os campos públicos para serialização.
-     * 
-     * @example
-     * const cargo = new Cargo();
-     * cargo.idCargo = "507f1f77bcf86cd799439011";
-     * cargo.nomeCargo = "Administrador";
-     * console.log(JSON.stringify(cargo));
-     * // Saída: {"idCargo":"507f1f77bcf86cd799439011","nomeCargo":"Administrador"}
-     */
     toJSON() {
         return {
             idCargo: this._idCargo,
@@ -1575,64 +1430,22 @@ ARQUIVO: models\Funcionario.ts
 import { ObjectId } from "mongodb";
 import { Cargo } from "./Cargo";
 
-/**
- * Representa a entidade Funcionario do sistema.
- * 
- * Objetivo:
- * - Encapsular os dados de um funcionário.
- * - Garantir integridade dos atributos via getters e setters.
- * - Associar corretamente um funcionário a um Cargo.
- * 
- * @example
- * const funcionario = new Funcionario();
- * funcionario.nomeFuncionario = "Ana Silva";
- * funcionario.email = "ana@empresa.com";
- * funcionario.senha = "Senha@123";
- * funcionario.recebeValeTransporte = 1;
- * 
- * const cargo = new Cargo();
- * cargo.idCargo = "67a1b2c3d4e5f6789a0b1c2d";
- * funcionario.cargo = cargo;
- */
 export class Funcionario {
     private _idFuncionario: string = '';
     private _cargo!: Cargo;
     private _nomeFuncionario: string = '';
     private _email: string = '';
     private _senha: string = '';
-    private _recebeValeTransporte: number = 0; // 0 = não, 1 = sim
+    private _recebeValeTransporte: number = 0;
 
-    /**
-     * Construtor da classe Funcionario.
-     * Inicializa o cargo com uma nova instância de Cargo.
-     */
     constructor() {
         this._cargo = new Cargo();
-        console.log("⬆️  Funcionario.constructor()");
     }
 
-    // ======================== GETTERS E SETTERS ========================
-
-    /**
-     * Retorna o ID do funcionário.
-     * @returns {string} ID no formato hexadecimal (ObjectId).
-     */
     get idFuncionario(): string {
         return this._idFuncionario;
     }
 
-    /**
-     * Define o ID do funcionário.
-     * 
-     * 🔹 Regra de domínio: deve ser um ObjectId válido do MongoDB (24 caracteres hex).
-     * 
-     * @param {string} value - ID do funcionário.
-     * @throws {Error} Se o valor for vazio ou não for um ObjectId válido.
-     * 
-     * @example
-     * funcionario.idFuncionario = "67a1b2c3d4e5f6789a0b1c2d"; // ✅
-     * funcionario.idFuncionario = "123"; // ❌ (lança erro)
-     */
     set idFuncionario(value: string) {
         if (!value) {
             throw new Error("idFuncionario é obrigatório.");
@@ -1643,27 +1456,10 @@ export class Funcionario {
         this._idFuncionario = value;
     }
 
-    /**
-     * Retorna o cargo associado ao funcionário.
-     * @returns {Cargo} Instância de Cargo.
-     */
     get cargo(): Cargo {
         return this._cargo;
     }
 
-    /**
-     * Define o cargo do funcionário.
-     * 
-     * 🔹 Regra de domínio: deve ser uma instância de Cargo.
-     * 
-     * @param {Cargo} value - Instância de Cargo.
-     * @throws {Error} Se o valor não for uma instância de Cargo.
-     * 
-     * @example
-     * const cargo = new Cargo();
-     * funcionario.cargo = cargo; // ✅
-     * funcionario.cargo = null;  // ❌
-     */
     set cargo(value: Cargo) {
         if (!(value instanceof Cargo)) {
             throw new Error("cargo deve ser uma instância válida de Cargo.");
@@ -1671,26 +1467,10 @@ export class Funcionario {
         this._cargo = value;
     }
 
-    /**
-     * Retorna o nome do funcionário.
-     * @returns {string} Nome do funcionário.
-     */
     get nomeFuncionario(): string {
         return this._nomeFuncionario;
     }
 
-    /**
-     * Define o nome do funcionário.
-     * 
-     * 🔹 Regra de domínio: deve ser uma string não vazia com pelo menos 3 caracteres.
-     * 
-     * @param {string} value - Nome do funcionário.
-     * @throws {Error} Se não for string ou tiver menos de 3 caracteres.
-     * 
-     * @example
-     * funcionario.nomeFuncionario = "João Silva"; // ✅
-     * funcionario.nomeFuncionario = "Jo"; // ❌ (menos de 3 caracteres)
-     */
     set nomeFuncionario(value: string) {
         if (typeof value !== "string") {
             throw new Error("nomeFuncionario deve ser uma string.");
@@ -1702,26 +1482,10 @@ export class Funcionario {
         this._nomeFuncionario = nome;
     }
 
-    /**
-     * Retorna o email do funcionário.
-     * @returns {string} Email.
-     */
     get email(): string {
         return this._email;
     }
 
-    /**
-     * Define o email do funcionário.
-     * 
-     * 🔹 Regra de domínio: deve ser um email válido (formato).
-     * 
-     * @param {string} value - Email do funcionário.
-     * @throws {Error} Se não for string, estiver vazio ou não seguir o formato.
-     * 
-     * @example
-     * funcionario.email = "ana@empresa.com"; // ✅
-     * funcionario.email = "email_invalido"; // ❌
-     */
     set email(value: string) {
         if (typeof value !== "string") {
             throw new Error("email deve ser uma string.");
@@ -1737,53 +1501,18 @@ export class Funcionario {
         this._email = emailTrimmed;
     }
 
-    /**
-     * Retorna a senha do funcionário.
-     * @returns {string} Senha (pode ser hash).
-     */
     get senha(): string {
         return this._senha;
     }
 
-    /**
-     * Define a senha do funcionário.
-     * 
-     * 🔹 Nota: Este setter não realiza validações para permitir a atribuição
-     * do hash gerado pelo bcrypt. As validações de força da senha devem ser
-     * aplicadas na camada de serviço antes da criptografia.
-     * 
-     * @param {string} value - Senha (texto puro ou hash).
-     * 
-     * @example
-     * // No Service (antes de salvar)
-     * const hash = await bcrypt.hash(senha, 12);
-     * funcionario.senha = hash; // ✅
-     */
     set senha(value: string) {
-        // Permite atribuição direta (sem validações)
         this._senha = value;
     }
 
-    /**
-     * Retorna se o funcionário recebe vale transporte.
-     * @returns {number} 0 = não, 1 = sim.
-     */
     get recebeValeTransporte(): number {
         return this._recebeValeTransporte;
     }
 
-    /**
-     * Define se o funcionário recebe vale transporte.
-     * 
-     * 🔹 Regra de domínio: deve ser 0 ou 1.
-     * 
-     * @param {number} value - 0 ou 1.
-     * @throws {Error} Se o valor não for 0 ou 1.
-     * 
-     * @example
-     * funcionario.recebeValeTransporte = 1; // ✅
-     * funcionario.recebeValeTransporte = 2; // ❌
-     */
     set recebeValeTransporte(value: number) {
         if (![0, 1].includes(value)) {
             throw new Error("recebeValeTransporte deve ser 0 ou 1.");
@@ -1791,26 +1520,6 @@ export class Funcionario {
         this._recebeValeTransporte = value;
     }
 
-    // ======================== SERIALIZAÇÃO ========================
-
-    /**
-     * Controla a serialização para JSON.
-     * 
-     * Remove os underlines dos campos e inclui o cargo serializado.
-     * 
-     * @returns {Object} Objeto com os campos: idFuncionario, nomeFuncionario,
-     *                   email, recebeValeTransporte, cargo (objeto).
-     * 
-     * @example
-     * const json = funcionario.toJSON();
-     * // {
-     * //   idFuncionario: "67a1b2c3d4e5f6789a0b1c2d",
-     * //   nomeFuncionario: "Ana Silva",
-     * //   email: "ana@empresa.com",
-     * //   recebeValeTransporte: 1,
-     * //   cargo: { idCargo: "...", nomeCargo: "..." }
-     * // }
-     */
     toJSON() {
         return {
             idFuncionario: this._idFuncionario,
@@ -1833,6 +1542,9 @@ import { CargoDAO } from "../dao/CargoDAO";
 import { FuncionarioDAO } from "../dao/FuncionarioDAO";
 import { MongoDatabase } from "../database/MongoDatabase";
 import { asyncHandler } from "../http/asyncHandler";
+import { createLogger } from "../logging/Logger";
+
+const log = createLogger("CargoRouter");
 
 export class CargoRouter {
     public static readonly PREFIX = "/api/v1/cargos";
@@ -1840,7 +1552,7 @@ export class CargoRouter {
     private _router: Router;
 
     constructor() {
-        console.log("⬆️ CargoRouter.constructor()");
+        log.debug("constructor()");
 
         const mainRouter = Router();
         const subRouter = Router();
@@ -1849,52 +1561,16 @@ export class CargoRouter {
         const cargoDAO = new CargoDAO(mongoDB);
         const funcionarioDAO = new FuncionarioDAO(mongoDB);
 
-        // ✅ CargoService agora recebe também o FuncionarioDAO
         const cargoService = new CargoService(cargoDAO, funcionarioDAO);
         const cargoController = new CargoController(cargoService);
         const jwtMiddleware = new JwtMiddleware();
 
-        // POST / - Criar um novo cargo
-        subRouter.post(
-            "/",
-            jwtMiddleware.validateToken,
-            asyncHandler(cargoController.create)
-        );
-
-        // GET / - Listar todos os cargos
-        subRouter.get(
-            "/",
-            jwtMiddleware.validateToken,
-            asyncHandler(cargoController.findAll)
-        );
-
-        // GET /count - Obter total de cargos (protegida por JWT)
-        subRouter.get(
-            "/count",
-            jwtMiddleware.validateToken,
-            asyncHandler(cargoController.count)
-        );
-
-        // GET /:idCargo - Buscar cargo por ID
-        subRouter.get(
-            "/:idCargo",
-            jwtMiddleware.validateToken,
-            asyncHandler(cargoController.findById)
-        );
-
-        // PUT /:idCargo - Atualizar cargo por ID
-        subRouter.put(
-            "/:idCargo",
-            jwtMiddleware.validateToken,
-            asyncHandler(cargoController.update)
-        );
-
-        // DELETE /:idCargo - Deletar cargo por ID
-        subRouter.delete(
-            "/:idCargo",
-            jwtMiddleware.validateToken,
-            asyncHandler(cargoController.delete)
-        );
+        subRouter.post("/", jwtMiddleware.validateToken, asyncHandler(cargoController.create));
+        subRouter.get("/", jwtMiddleware.validateToken, asyncHandler(cargoController.findAll));
+        subRouter.get("/count", jwtMiddleware.validateToken, asyncHandler(cargoController.count));
+        subRouter.get("/:idCargo", jwtMiddleware.validateToken, asyncHandler(cargoController.findById));
+        subRouter.put("/:idCargo", jwtMiddleware.validateToken, asyncHandler(cargoController.update));
+        subRouter.delete("/:idCargo", jwtMiddleware.validateToken, asyncHandler(cargoController.delete));
 
         mainRouter.use(CargoRouter.PREFIX, subRouter);
         this._router = mainRouter;
@@ -1916,6 +1592,9 @@ import { FuncionarioDAO } from "../dao/FuncionarioDAO";
 import { CargoDAO } from "../dao/CargoDAO";
 import { MongoDatabase } from "../database/MongoDatabase";
 import { asyncHandler } from "../http/asyncHandler";
+import { createLogger } from "../logging/Logger";
+
+const log = createLogger("FuncionarioRouter");
 
 export class FuncionarioRouter {
     public static readonly PREFIX = "/api/v1/funcionarios";
@@ -1924,7 +1603,7 @@ export class FuncionarioRouter {
     private _funcionarioService: FuncionarioService;
 
     constructor() {
-        console.log("⬆️ FuncionarioRouter.constructor()");
+        log.debug("constructor()");
 
         const mainRouter = Router();
         const subRouter = Router();
@@ -1936,54 +1615,15 @@ export class FuncionarioRouter {
         const funcionarioController = new FuncionarioController(this._funcionarioService);
         const jwtMiddleware = new JwtMiddleware();
 
-        // ======================== ROTAS PÚBLICAS ========================
-        subRouter.post(
-            "/login",
-            asyncHandler(funcionarioController.login)
-        );
+        subRouter.post("/login", asyncHandler(funcionarioController.login));
 
-        // ======================== ROTAS PROTEGIDAS POR JWT ========================
-        subRouter.post(
-            "/",
-            jwtMiddleware.validateToken,
-            asyncHandler(funcionarioController.create)
-        );
-
-        subRouter.get(
-            "/",
-            jwtMiddleware.validateToken,
-            asyncHandler(funcionarioController.findAll)
-        );
-
-        subRouter.get(
-            "/count",
-            jwtMiddleware.validateToken,
-            asyncHandler(funcionarioController.count)
-        );
-
-        subRouter.get(
-            "/count/:idCargo",
-            jwtMiddleware.validateToken,
-            asyncHandler(funcionarioController.countByCargoId)
-        );
-
-        subRouter.get(
-            "/:idFuncionario",
-            jwtMiddleware.validateToken,
-            asyncHandler(funcionarioController.findById)
-        );
-
-        subRouter.put(
-            "/:idFuncionario",
-            jwtMiddleware.validateToken,
-            asyncHandler(funcionarioController.update)
-        );
-
-        subRouter.delete(
-            "/:idFuncionario",
-            jwtMiddleware.validateToken,
-            asyncHandler(funcionarioController.delete)
-        );
+        subRouter.post("/", jwtMiddleware.validateToken, asyncHandler(funcionarioController.create));
+        subRouter.get("/", jwtMiddleware.validateToken, asyncHandler(funcionarioController.findAll));
+        subRouter.get("/count", jwtMiddleware.validateToken, asyncHandler(funcionarioController.count));
+        subRouter.get("/count/:idCargo", jwtMiddleware.validateToken, asyncHandler(funcionarioController.countByCargoId));
+        subRouter.get("/:idFuncionario", jwtMiddleware.validateToken, asyncHandler(funcionarioController.findById));
+        subRouter.put("/:idFuncionario", jwtMiddleware.validateToken, asyncHandler(funcionarioController.update));
+        subRouter.delete("/:idFuncionario", jwtMiddleware.validateToken, asyncHandler(funcionarioController.delete));
 
         mainRouter.use(FuncionarioRouter.PREFIX, subRouter);
         this._router = mainRouter;
@@ -1993,7 +1633,6 @@ export class FuncionarioRouter {
         return this._router;
     };
 
-    /** Exposto para o Server chamar initializeDefaultAdmin() no bootstrap. */
     public getService = (): FuncionarioService => {
         return this._funcionarioService;
     };
@@ -2010,47 +1649,49 @@ import { CargoRouter } from "./routers/CargoRouter";
 import { FuncionarioRouter } from "./routers/FuncionarioRouter";
 import { ErrorResponse } from "./http/ErrorResponse";
 import { StandardResponse } from "./http/StandardResponse";
+import { httpLogger } from "./logging/HttpLogger";
+import { createLogger } from "./logging/Logger";
+
+const log = createLogger("Server");
 
 export class Server {
     private _porta: number;
     private _app: Express;
-
     private _cargoRouter: CargoRouter;
     private _funcionarioRouter: FuncionarioRouter;
 
     constructor(porta: number) {
-        console.log("⬆️ Server.constructor()");
+        log.debug("constructor()");
         this._porta = porta;
         this._app = express();
-
         this._cargoRouter = new CargoRouter();
         this._funcionarioRouter = new FuncionarioRouter();
     }
 
     async init(): Promise<void> {
-        console.log("⬆️ Server.init()");
+        log.debug("init()");
 
-        // Cria o administrador padrão ANTES de expor as rotas (idempotente).
         try {
             await this._funcionarioRouter.getService().initializeDefaultAdmin();
         } catch (err) {
-            console.error("❌ Falha ao inicializar administrador padrão:", err);
-            // Não encerra a aplicação; apenas loga.
+            log.error("falha ao inicializar administrador padrão", { error: err });
         }
 
+        this._app.use(httpLogger);
         this._app.use(cors({ origin: "*" }));
         this._app.use(express.json());
 
-        // Em dev: __dirname = src/. Após build: __dirname = dist/.
-        // Garanta que "public" seja copiado para "dist/public" no build.
         const publicDir = path.resolve(__dirname, "public");
         this._app.use(express.static(publicDir));
 
-        // Rotas da API (os routers já contêm seus prefixos internos)
+        // 👇 raiz → login.html
+        this._app.get("/", (_req: Request, res: Response) => {
+            res.sendFile(path.join(publicDir, "login.html"));
+        });
+
         this._app.use(this._cargoRouter.getRouter());
         this._app.use(this._funcionarioRouter.getRouter());
 
-        // 404 para rotas não mapeadas (antes do middleware de erro)
         this._app.use((_req: Request, res: Response) => {
             StandardResponse.notFound("Rota não encontrada").send(res);
         });
@@ -2060,26 +1701,35 @@ export class Server {
 
     private setupErrorMiddleware(): void {
         this._app.use((error: any, _req: Request, res: Response, _next: NextFunction) => {
-            console.error("❌ Erro capturado:", error);
-
             if (error instanceof ErrorResponse) {
+                log.warn("erro de negócio", {
+                    httpCode: error.httpCode,
+                    message: error.message,
+                    details: error.error,
+                });
                 return StandardResponse.error(error.message, error.error, error.httpCode).send(res);
             }
 
+            log.error("erro não tratado", {
+                message: error?.message,
+                stack: error?.stack,
+            });
+
             return StandardResponse.internalError("Erro interno do servidor", {
-                message: error?.message || "Erro interno"
+                message: error?.message || "Erro interno",
             }).send(res);
         });
     }
 
     run(): void {
-        this._app.listen(this._porta)
-            .on('error', (err) => {
-                console.error(`❌ Erro ao iniciar servidor na porta ${this._porta}:`, err);
+        this._app
+            .listen(this._porta)
+            .on("error", (err) => {
+                log.error(`falha ao escutar na porta ${this._porta}`, { error: err });
                 process.exit(1);
             })
-            .on('listening', () => {
-                console.log(`🚀 Server rodando em http://localhost:${this._porta}/login.html`);
+            .on("listening", () => {
+                log.info(`servidor ouvindo em http://localhost:${this._porta}`);
             });
     }
 }
@@ -2092,14 +1742,15 @@ import { FuncionarioDAO } from "../dao/FuncionarioDAO";
 import { Cargo } from "../models/Cargo";
 import { ErrorResponse } from "../http/ErrorResponse";
 import { Funcionario } from "../models/Funcionario";
+import { createLogger } from "../logging/Logger";
+
+const log = createLogger("CargoService");
 
 export class CargoService {
     private _cargoDAO: CargoDAO;
     private _funcionarioDAO: FuncionarioDAO;
 
-    // ✅ Agora recebe FuncionarioDAO (para integridade referencial no delete)
     constructor(cargoDAODependency: CargoDAO, funcionarioDAODependency: FuncionarioDAO) {
-        console.log("⬆️  CargoService.constructor()");
         this._cargoDAO = cargoDAODependency;
         this._funcionarioDAO = funcionarioDAODependency;
     }
@@ -2109,9 +1760,13 @@ export class CargoService {
     }
 
     public create = async (cargo: Cargo, funcionarioLogado: Funcionario): Promise<Cargo> => {
-        console.log("🟣 CargoService.create()");
+        log.debug("create()", { nomeCargo: cargo.nomeCargo });
 
         if (!this.isAdmin(funcionarioLogado)) {
+            log.warn("criação de cargo negada", {
+                motivo: "não é administrador",
+                cargoAtor: funcionarioLogado.cargo?.nomeCargo,
+            });
             throw new ErrorResponse(403, "Não autorizado", {
                 message: `O cargo "${funcionarioLogado.cargo?.nomeCargo ?? 'desconhecido'}" não é autorizado a criar cargos.`
             });
@@ -2125,39 +1780,49 @@ export class CargoService {
         }
 
         try {
-            return await this._cargoDAO.create(cargo);
+            const criado = await this._cargoDAO.create(cargo);
+            log.info("cargo criado", {
+                idCargo: criado.idCargo,
+                nomeCargo: criado.nomeCargo,
+                criadoPor: funcionarioLogado.email,
+            });
+            return criado;
         } catch (err: any) {
             if (err?.code === 11000) {
                 throw new ErrorResponse(400, "Cargo já existe", {
                     message: `O cargo "${cargo.nomeCargo}" já existe.`
                 });
             }
+            log.error("falha ao criar cargo", { nomeCargo: cargo.nomeCargo, error: err });
             throw err;
         }
     };
 
     public findAll = async (_funcionarioLogado: Funcionario): Promise<Cargo[]> => {
-        console.log("🟣 CargoService.findAll()");
+        log.debug("findAll()");
         return await this._cargoDAO.findAll();
     };
 
     public findById = async (idCargo: string, _funcionarioLogado: Funcionario): Promise<Cargo | null> => {
-        console.log("🟣 CargoService.findById()");
+        log.debug("findById()", { idCargo });
         const cargo = new Cargo();
         cargo.idCargo = idCargo;
         return await this._cargoDAO.findById(cargo.idCargo);
     };
 
     public update = async (cargo: Cargo, funcionarioLogado: Funcionario): Promise<boolean> => {
-        console.log("🟣 CargoService.update()");
+        log.debug("update()", { idCargo: cargo.idCargo });
 
         if (!this.isAdmin(funcionarioLogado)) {
+            log.warn("atualização de cargo negada", {
+                motivo: "não é administrador",
+                cargoAtor: funcionarioLogado.cargo?.nomeCargo,
+            });
             throw new ErrorResponse(403, "Não autorizado", {
                 message: `O cargo "${funcionarioLogado.cargo?.nomeCargo ?? 'desconhecido'}" não é autorizado a atualizar cargos.`
             });
         }
 
-        // Verifica duplicidade case-insensitive (exceto o próprio registro)
         const duplicados = await this._cargoDAO.findByField("nomeCargo", cargo.nomeCargo);
         const duplicadoDeOutro = duplicados.some(c => c.idCargo !== cargo.idCargo);
         if (duplicadoDeOutro) {
@@ -2167,7 +1832,15 @@ export class CargoService {
         }
 
         try {
-            return await this._cargoDAO.update(cargo);
+            const atualizou = await this._cargoDAO.update(cargo);
+            if (atualizou) {
+                log.info("cargo atualizado", {
+                    idCargo: cargo.idCargo,
+                    nomeCargo: cargo.nomeCargo,
+                    atualizadoPor: funcionarioLogado.email,
+                });
+            }
+            return atualizou;
         } catch (err: any) {
             if (err?.code === 11000) {
                 throw new ErrorResponse(400, "Cargo já existe", {
@@ -2179,27 +1852,41 @@ export class CargoService {
     };
 
     public delete = async (cargo: Cargo, funcionarioLogado: Funcionario): Promise<boolean> => {
-        console.log("🟣 CargoService.delete()");
+        log.debug("delete()", { idCargo: cargo.idCargo });
 
         if (!this.isAdmin(funcionarioLogado)) {
+            log.warn("exclusão de cargo negada", {
+                motivo: "não é administrador",
+                cargoAtor: funcionarioLogado.cargo?.nomeCargo,
+            });
             throw new ErrorResponse(403, "Não autorizado", {
                 message: `O cargo "${funcionarioLogado.cargo?.nomeCargo ?? 'desconhecido'}" não é autorizado a excluir cargos.`
             });
         }
 
-        // ✅ Integridade referencial: não permite excluir cargo com funcionários
         const total = await this._funcionarioDAO.countByCargoId(cargo.idCargo);
         if (total > 0) {
+            log.warn("exclusão de cargo bloqueada", {
+                idCargo: cargo.idCargo,
+                funcionariosVinculados: total,
+            });
             throw new ErrorResponse(400, "Não é possível excluir o cargo", {
                 message: `Existem ${total} funcionário(s) vinculados a este cargo. Reatribua-os antes de excluir.`
             });
         }
 
-        return await this._cargoDAO.delete(cargo);
+        const excluiu = await this._cargoDAO.delete(cargo);
+        if (excluiu) {
+            log.info("cargo excluído", {
+                idCargo: cargo.idCargo,
+                excluidoPor: funcionarioLogado.email,
+            });
+        }
+        return excluiu;
     };
 
     public count = async (_funcionarioLogado: Funcionario): Promise<number> => {
-        console.log("🟣 CargoService.count()");
+        log.debug("count()");
         return await this._cargoDAO.count();
     };
 }
@@ -2214,29 +1901,25 @@ import { Cargo } from "../models/Cargo";
 import { Funcionario } from "../models/Funcionario";
 import { ErrorResponse } from "../http/ErrorResponse";
 import { MeuTokenJWT } from "../http/MeuTokenJWT";
+import { createLogger } from "../logging/Logger";
+
+const log = createLogger("FuncionarioService");
 
 export class FuncionarioService {
     private _funcionarioDAO: FuncionarioDAO;
     private _cargoDAO: CargoDAO;
 
     constructor(funcionarioDAODependency: FuncionarioDAO, cargoDAODependency: CargoDAO) {
-        console.log("⬆️  FuncionarioService.constructor()");
         this._funcionarioDAO = funcionarioDAODependency;
         this._cargoDAO = cargoDAODependency;
-        // ⚠️ initializeDefaultAdmin() NÃO é mais chamado aqui.
-        // Deve ser aguardado no bootstrap (Server.init()).
     }
 
-    /**
-     * Cria o administrador padrão se não houver nenhum funcionário cadastrado.
-     * Idempotente. Chamado (com await) no bootstrap.
-     */
     public initializeDefaultAdmin = async (): Promise<Funcionario | void> => {
-        console.log("🟣 FuncionarioService.initializeDefaultAdmin()");
+        log.debug("initializeDefaultAdmin()");
 
         const total = await this._funcionarioDAO.count();
         if (total > 0) {
-            console.log("✅ Já existem funcionários cadastrados. Pulando criação do admin padrão.");
+            log.info("já existem funcionários cadastrados; pulando criação do admin padrão");
             return;
         }
 
@@ -2244,13 +1927,12 @@ export class FuncionarioService {
         let cargoId: string;
         if (cargoAdmin && cargoAdmin.length > 0) {
             cargoId = cargoAdmin[0].idCargo;
-            console.log(`🔍 Cargo "Administrador" encontrado com ID: ${cargoId}`);
         } else {
             const cargo = new Cargo();
             cargo.nomeCargo = "Administrador";
             const cargoCriado = await this._cargoDAO.create(cargo);
             cargoId = cargoCriado.idCargo;
-            console.log(`🆕 Cargo "Administrador" criado com ID: ${cargoId}`);
+            log.info("cargo Administrador criado", { idCargo: cargoId });
         }
 
         const adminName = process.env.DEFAULT_ADMIN_NAME || "Hélio Esperidião";
@@ -2269,15 +1951,21 @@ export class FuncionarioService {
         funcionarioAdmin.cargo = cargo;
 
         const novoAdmin = await this._funcionarioDAO.create(funcionarioAdmin);
-        console.log(`✅ Administrador padrão criado com ID: ${novoAdmin.idFuncionario}`);
+        log.info("administrador padrão criado", {
+            idFuncionario: novoAdmin.idFuncionario,
+            email: novoAdmin.email,
+        });
         return novoAdmin;
     };
 
     public create = async (funcionario: Funcionario, funcionarioLogado: Funcionario): Promise<Funcionario> => {
-        console.log("🟣 FuncionarioService.create()");
+        log.debug("create()", { email: funcionario.email });
 
-        // ✅ Apenas administradores podem criar funcionários
         if (funcionarioLogado.cargo?.nomeCargo !== "Administrador") {
+            log.warn("criação de funcionário negada", {
+                motivo: "não é administrador",
+                cargoAtor: funcionarioLogado.cargo?.nomeCargo,
+            });
             throw new ErrorResponse(403, "Não autorizado", {
                 message: `O cargo "${funcionarioLogado.cargo?.nomeCargo ?? 'desconhecido'}" não é autorizado a criar funcionários.`
             });
@@ -2300,40 +1988,51 @@ export class FuncionarioService {
         funcionario.senha = await bcrypt.hash(funcionario.senha, 12);
 
         try {
-            return await this._funcionarioDAO.create(funcionario);
+            const novo = await this._funcionarioDAO.create(funcionario);
+            log.info("funcionário criado", {
+                idFuncionario: novo.idFuncionario,
+                email: novo.email,
+                cargo: novo.cargo.nomeCargo,
+                criadoPor: funcionarioLogado.email,
+            });
+            return novo;
         } catch (err: any) {
-            // ✅ Traduz violação do índice único em 400
             if (err?.code === 11000) {
                 throw new ErrorResponse(400, "Já existe um funcionário com este email");
             }
+            log.error("falha ao criar funcionário", { email: funcionario.email, error: err });
             throw err;
         }
     };
 
     public loginFuncionario = async (funcionario: Funcionario): Promise<{ user: Funcionario; token: string }> => {
-        console.log("🟣 FuncionarioService.loginFuncionario()");
+        log.debug("loginFuncionario()", { email: funcionario.email });
 
         const funcionarioBanco = await this._funcionarioDAO.findByEmail(funcionario.email);
         if (!funcionarioBanco) {
+            log.warn("login falhou", { email: funcionario.email, motivo: "email não encontrado" });
             throw new ErrorResponse(401, "Usuário ou senha inválidos");
         }
 
         const senhaValida = await bcrypt.compare(funcionario.senha, funcionarioBanco.senha);
         if (!senhaValida) {
+            log.warn("login falhou", { email: funcionario.email, motivo: "senha inválida" });
             throw new ErrorResponse(401, "Usuário ou senha inválidos");
         }
 
         const jwt = new MeuTokenJWT();
         const token = jwt.gerarToken(funcionarioBanco);
+        log.info("login efetuado", { idFuncionario: funcionarioBanco.idFuncionario });
         return { user: funcionarioBanco, token };
     };
 
     public findAll = async (_funcionarioLogado: Funcionario): Promise<Funcionario[]> => {
-        console.log("🟣 FuncionarioService.findAll()");
+        log.debug("findAll()");
         return await this._funcionarioDAO.findAll();
     };
 
     public findById = async (idFuncionario: string, _funcionarioLogado: Funcionario): Promise<Funcionario> => {
+        log.debug("findById()", { idFuncionario });
         const funcionario = await this._funcionarioDAO.findById(idFuncionario);
         if (!funcionario) {
             throw new ErrorResponse(404, "Funcionário não encontrado");
@@ -2341,10 +2040,9 @@ export class FuncionarioService {
         return funcionario;
     };
 
-    public updateFuncionario = async (funcionario: Funcionario, _funcionarioLogado: Funcionario): Promise<boolean> => {
-        console.log(`🟣 FuncionarioService.updateFuncionario(${funcionario.idFuncionario})`);
+    public updateFuncionario = async (funcionario: Funcionario, funcionarioLogado: Funcionario): Promise<boolean> => {
+        log.debug("updateFuncionario()", { idFuncionario: funcionario.idFuncionario });
 
-        // ✅ Hash da nova senha, se enviada em texto plano
         if (funcionario.senha && funcionario.senha.trim() !== "") {
             const isBcryptHash = /^\$2[aby]\$\d{2}\$/.test(funcionario.senha);
             if (!isBcryptHash) {
@@ -2367,7 +2065,14 @@ export class FuncionarioService {
         }
 
         try {
-            return await this._funcionarioDAO.update(funcionario);
+            const atualizou = await this._funcionarioDAO.update(funcionario);
+            if (atualizou) {
+                log.info("funcionário atualizado", {
+                    idFuncionario: funcionario.idFuncionario,
+                    atualizadoPor: funcionarioLogado.email,
+                });
+            }
+            return atualizou;
         } catch (err: any) {
             if (err?.code === 11000) {
                 throw new ErrorResponse(400, "Já existe um funcionário com este email");
@@ -2376,17 +2081,25 @@ export class FuncionarioService {
         }
     };
 
-    public deleteFuncionario = async (funcionario: Funcionario, _funcionarioLogado: Funcionario): Promise<boolean> => {
-        return await this._funcionarioDAO.delete(funcionario);
+    public deleteFuncionario = async (funcionario: Funcionario, funcionarioLogado: Funcionario): Promise<boolean> => {
+        log.debug("deleteFuncionario()", { idFuncionario: funcionario.idFuncionario });
+        const excluiu = await this._funcionarioDAO.delete(funcionario);
+        if (excluiu) {
+            log.info("funcionário excluído", {
+                idFuncionario: funcionario.idFuncionario,
+                excluidoPor: funcionarioLogado.email,
+            });
+        }
+        return excluiu;
     };
 
     public count = async (_funcionarioLogado: Funcionario): Promise<number> => {
-        console.log("🟣 FuncionarioService.count()");
+        log.debug("count()");
         return await this._funcionarioDAO.count();
     };
 
     public countByCargoId = async (cargoId: string, _funcionarioLogado: Funcionario): Promise<number> => {
-        console.log(`🟣 FuncionarioService.countByCargoId(${cargoId})`);
+        log.debug("countByCargoId()", { cargoId });
         return await this._funcionarioDAO.countByCargoId(cargoId);
     };
 }

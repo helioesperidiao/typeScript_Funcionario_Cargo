@@ -6,6 +6,7 @@ import { createLogger } from '../logging/Logger';
 
 const log = createLogger("MeuTokenJWT");
 
+/** Gera e valida tokens JWT usados para autenticar funcionários. */
 export class MeuTokenJWT {
     private _key: string;
     private _alg: string;
@@ -15,6 +16,7 @@ export class MeuTokenJWT {
     private _sub: string;
     private _duracaoToken: number;
 
+    /** Carrega as opções do token a partir do ambiente ou de valores padrão. */
     constructor() {
         this._key = process.env.JWT_SECRET || "x9S4q0v+V0IjvHkG20uAxaHx1ijj+q1HWjHKv+ohxp/oK+77qyXkVj/l4QYHHTF3";
         this._alg = process.env.JWT_ALGORITHM || "HS256";
@@ -32,10 +34,12 @@ export class MeuTokenJWT {
         });
     }
 
+    /** Assina um token com a identidade do funcionário e seu período de validade. */
     public gerarToken = (funcionario: Funcionario): string => {
         log.debug("gerarToken()", { idFuncionario: funcionario.idFuncionario });
         const headers = { alg: this._alg, typ: this._type };
 
+        // O payload contém as informações que o servidor precisa nas rotas protegidas.
         const payload = {
             iss: this._iss,
             aud: this._aud,
@@ -59,6 +63,7 @@ export class MeuTokenJWT {
         });
     };
 
+    /** Verifica assinatura e declarações do token; devolve null se ele for inválido. */
     public validarToken = (stringToken: string): Funcionario | null => {
         if (!stringToken || stringToken.trim() === "") {
             log.debug("token não fornecido ou vazio");
@@ -68,6 +73,7 @@ export class MeuTokenJWT {
         const token = stringToken.replace("Bearer ", "").trim();
 
         try {
+            // verify também confere expiração, emissor, público e algoritmo aceito.
             const decoded: any = jwt.verify(token, this._key, {
                 algorithms: [this._alg as jwt.Algorithm],
                 issuer: this._iss,
@@ -99,18 +105,32 @@ export class MeuTokenJWT {
         }
     };
 
+    /** Lê a chave usada para assinar e verificar os tokens. */
     get key(): string { return this._key; }
+    /** Substitui a chave usada para assinar e verificar os tokens. */
     set key(value: string) { this._key = value; }
+    /** Lê o algoritmo configurado para assinar o token. */
     get alg(): string { return this._alg; }
+    /** Define o algoritmo configurado para assinar o token. */
     set alg(value: string) { this._alg = value; }
+    /** Lê o tipo informado no cabeçalho do token. */
     get type(): string { return this._type; }
+    /** Define o tipo informado no cabeçalho do token. */
     set type(value: string) { this._type = value; }
+    /** Lê quem emitiu o token (issuer). */
     get iss(): string { return this._iss; }
+    /** Define quem emitiu o token (issuer). */
     set iss(value: string) { this._iss = value; }
+    /** Lê o público esperado do token (audience). */
     get aud(): string { return this._aud; }
+    /** Define o público esperado do token (audience). */
     set aud(value: string) { this._aud = value; }
+    /** Lê o assunto que identifica a finalidade do token. */
     get sub(): string { return this._sub; }
+    /** Define o assunto que identifica a finalidade do token. */
     set sub(value: string) { this._sub = value; }
+    /** Lê o tempo de validade do token, em segundos. */
     get duracaoToken(): number { return this._duracaoToken; }
+    /** Define o tempo de validade do token, em segundos. */
     set duracaoToken(value: number) { this._duracaoToken = value; }
 }

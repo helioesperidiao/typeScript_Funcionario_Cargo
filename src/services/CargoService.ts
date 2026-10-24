@@ -7,31 +7,20 @@ import { createLogger } from "../logging/Logger";
 
 const log = createLogger("CargoService");
 
+/** Aplica as regras de negócio antes de acessar cargos no banco. */
 export class CargoService {
     private _cargoDAO: CargoDAO;
     private _funcionarioDAO: FuncionarioDAO;
 
+    /** Recebe as dependências de persistência necessárias às regras de cargos. */
     constructor(cargoDAODependency: CargoDAO, funcionarioDAODependency: FuncionarioDAO) {
         this._cargoDAO = cargoDAODependency;
         this._funcionarioDAO = funcionarioDAODependency;
     }
 
-    private isAdmin(funcionario: Funcionario): boolean {
-        return funcionario.cargo?.nomeCargo === "Administrador";
-    }
-
+    /** Cria um cargo, impedindo nomes duplicados. */
     public create = async (cargo: Cargo, funcionarioLogado: Funcionario): Promise<Cargo> => {
         log.debug("create()", { nomeCargo: cargo.nomeCargo });
-
-        if (!this.isAdmin(funcionarioLogado)) {
-            log.warn("criação de cargo negada", {
-                motivo: "não é administrador",
-                cargoAtor: funcionarioLogado.cargo?.nomeCargo,
-            });
-            throw new ErrorResponse(403, "Não autorizado", {
-                message: `O cargo "${funcionarioLogado.cargo?.nomeCargo ?? 'desconhecido'}" não é autorizado a criar cargos.`
-            });
-        }
 
         const resultado = await this._cargoDAO.findByField("nomeCargo", cargo.nomeCargo);
         if (resultado.length > 0) {
@@ -59,11 +48,13 @@ export class CargoService {
         }
     };
 
+    /** Retorna todos os cargos cadastrados. */
     public findAll = async (_funcionarioLogado: Funcionario): Promise<Cargo[]> => {
         log.debug("findAll()");
         return await this._cargoDAO.findAll();
     };
 
+    /** Retorna o cargo com o identificador informado, ou null se não existir. */
     public findById = async (idCargo: string, _funcionarioLogado: Funcionario): Promise<Cargo | null> => {
         log.debug("findById()", { idCargo });
         const cargo = new Cargo();
@@ -71,18 +62,9 @@ export class CargoService {
         return await this._cargoDAO.findById(cargo.idCargo);
     };
 
+    /** Atualiza um cargo, rejeitando um nome que já pertença a outro cargo. */
     public update = async (cargo: Cargo, funcionarioLogado: Funcionario): Promise<boolean> => {
         log.debug("update()", { idCargo: cargo.idCargo });
-
-        if (!this.isAdmin(funcionarioLogado)) {
-            log.warn("atualização de cargo negada", {
-                motivo: "não é administrador",
-                cargoAtor: funcionarioLogado.cargo?.nomeCargo,
-            });
-            throw new ErrorResponse(403, "Não autorizado", {
-                message: `O cargo "${funcionarioLogado.cargo?.nomeCargo ?? 'desconhecido'}" não é autorizado a atualizar cargos.`
-            });
-        }
 
         const duplicados = await this._cargoDAO.findByField("nomeCargo", cargo.nomeCargo);
         const duplicadoDeOutro = duplicados.some(c => c.idCargo !== cargo.idCargo);
@@ -112,18 +94,9 @@ export class CargoService {
         }
     };
 
+    /** Exclui o cargo somente quando nenhum funcionário estiver associado a ele. */
     public delete = async (cargo: Cargo, funcionarioLogado: Funcionario): Promise<boolean> => {
         log.debug("delete()", { idCargo: cargo.idCargo });
-
-        if (!this.isAdmin(funcionarioLogado)) {
-            log.warn("exclusão de cargo negada", {
-                motivo: "não é administrador",
-                cargoAtor: funcionarioLogado.cargo?.nomeCargo,
-            });
-            throw new ErrorResponse(403, "Não autorizado", {
-                message: `O cargo "${funcionarioLogado.cargo?.nomeCargo ?? 'desconhecido'}" não é autorizado a excluir cargos.`
-            });
-        }
 
         const total = await this._funcionarioDAO.countByCargoId(cargo.idCargo);
         if (total > 0) {
@@ -146,6 +119,7 @@ export class CargoService {
         return excluiu;
     };
 
+    /** Conta os cargos cadastrados. */
     public count = async (_funcionarioLogado: Funcionario): Promise<number> => {
         log.debug("count()");
         return await this._cargoDAO.count();

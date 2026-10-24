@@ -6,7 +6,8 @@ import { requestStore } from "./requestStore";
 const isProduction = process.env.NODE_ENV === "production";
 const logLevel = process.env.LOG_LEVEL || (isProduction ? "info" : "debug");
 
-// Injeta requestId + número de sequência em cada linha do request
+// O AsyncLocalStorage permite anexar contexto da requisição sem passar requestId
+// manualmente por todos os serviços e DAOs chamados durante o processamento.
 const injectRequestId = winston.format((info) => {
     const ctx = requestStore.getStore();
     if (ctx) {
@@ -48,4 +49,5 @@ export const Logger = winston.createLogger({
     exitOnError: false,
 });
 
+/** Cria um logger com o nome da camada incluído em cada registro. */
 export const createLogger = (layer: string) => Logger.child({ layer });

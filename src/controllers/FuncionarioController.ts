@@ -9,14 +9,17 @@ import { createLogger } from "../logging/Logger";
 
 const log = createLogger("FuncionarioController");
 
+/** Recebe requisições HTTP de funcionários e formata suas respostas. */
 export class FuncionarioController extends BaseController {
     private _funcionarioService: FuncionarioService;
 
+    /** Recebe o serviço responsável pelas regras de negócio de funcionários. */
     constructor(funcionarioServiceDependency: FuncionarioService) {
         super();
         this._funcionarioService = funcionarioServiceDependency;
     }
 
+    /** Valida as credenciais e solicita ao serviço o login e o token JWT. */
     public login = async (request: Request, response: Response): Promise<void> => {
         log.debug("login()");
 
@@ -33,6 +36,7 @@ export class FuncionarioController extends BaseController {
         StandardResponse.success("Login efetuado com sucesso!", resultado).send(response);
     };
 
+    /** Monta um funcionário a partir do JSON e solicita seu cadastro. */
     public create = async (request: Request, response: Response): Promise<void> => {
         log.debug("create()");
 
@@ -61,6 +65,7 @@ export class FuncionarioController extends BaseController {
         StandardResponse.created("Cadastro realizado com sucesso", { funcionario: resultado }).send(response);
     };
 
+    /** Lista os funcionários cadastrados. */
     public findAll = async (request: Request, response: Response): Promise<void> => {
         log.debug("findAll()");
         const funcionarioLogado = this.getFuncionarioLogado(request);
@@ -68,6 +73,7 @@ export class FuncionarioController extends BaseController {
         StandardResponse.success("Executado com sucesso", { funcionarios: listaFuncionarios }).send(response);
     };
 
+    /** Busca um funcionário pelo identificador presente na URL. */
     public findById = async (request: Request, response: Response): Promise<void> => {
         log.debug("findById()", { idFuncionario: request.params.idFuncionario });
         const funcionarioLogado = this.getFuncionarioLogado(request);
@@ -76,6 +82,7 @@ export class FuncionarioController extends BaseController {
         StandardResponse.success("Executado com sucesso", funcionario).send(response);
     };
 
+    /** Atualiza os dados enviados; senha só é alterada quando foi informada. */
     public update = async (request: Request, response: Response): Promise<void> => {
         log.debug("update()", { idFuncionario: request.params.idFuncionario });
 
@@ -120,6 +127,7 @@ export class FuncionarioController extends BaseController {
         }).send(response);
     };
 
+    /** Remove o funcionário identificado na URL. */
     public delete = async (request: Request, response: Response): Promise<void> => {
         log.debug("delete()", { idFuncionario: request.params.idFuncionario });
 
@@ -141,6 +149,7 @@ export class FuncionarioController extends BaseController {
         StandardResponse.noContent().send(response);
     };
 
+    /** Retorna a quantidade total de funcionários cadastrados. */
     public count = async (request: Request, response: Response): Promise<void> => {
         log.debug("count()");
         const funcionarioLogado = this.getFuncionarioLogado(request);
@@ -148,6 +157,7 @@ export class FuncionarioController extends BaseController {
         StandardResponse.success("Total de funcionários obtido", { total }).send(response);
     };
 
+    /** Conta os funcionários associados ao cargo indicado na URL. */
     public countByCargoId = async (request: Request, response: Response): Promise<void> => {
         log.debug("countByCargoId()", { idCargo: request.params.idCargo });
         const funcionarioLogado = this.getFuncionarioLogado(request);

@@ -6,7 +6,9 @@ import { createLogger } from '../logging/Logger';
 
 const log = createLogger("JwtMiddleware");
 
+/** Middleware que autentica a requisição usando o token do cabeçalho HTTP. */
 export class JwtMiddleware {
+    /** Valida o token e disponibiliza o funcionário autenticado no request. */
     public validateToken = (request: Request, _response: Response, next: NextFunction): void => {
         log.debug("validateToken()");
 

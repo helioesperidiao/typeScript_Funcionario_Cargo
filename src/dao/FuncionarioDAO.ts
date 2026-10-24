@@ -6,14 +6,17 @@ import { createLogger } from "../logging/Logger";
 
 const log = createLogger("FuncionarioDAO");
 
+/** Executa consultas e alterações de funcionários no MongoDB. */
 export class FuncionarioDAO {
     private _database: MongoDatabase;
     private _indexesPromise: Promise<void> | null = null;
 
+    /** Recebe a conexão que será usada para acessar a coleção de funcionários. */
     constructor(dbInstance: MongoDatabase) {
         this._database = dbInstance;
     }
 
+    /** Cria, uma única vez, o índice que torna o e-mail exclusivo. */
     private async ensureIndexes(collection: Collection<Document>): Promise<void> {
         if (!this._indexesPromise) {
             this._indexesPromise = (async () => {
@@ -30,6 +33,7 @@ export class FuncionarioDAO {
         return this._indexesPromise;
     }
 
+    /** Obtém a coleção de funcionários e prepara o índice necessário. */
     private async getCollection(): Promise<Collection<Document>> {
         const db = await this._database.getDb();
         const col = db.collection("funcionario");
@@ -39,6 +43,7 @@ export class FuncionarioDAO {
 
     // ======================== CRUD ========================
 
+    /** Insere o funcionário e converte IDs de cargo para ObjectId do MongoDB. */
     public async create(objFuncionarioModel: Funcionario): Promise<Funcionario> {
         log.debug("create()", { email: objFuncionarioModel.email });
         const collection = await this.getCollection();
@@ -47,6 +52,7 @@ export class FuncionarioDAO {
             throw new Error("Cargo não informado");
         }
 
+        // O DAO aceita o hash interno recuperado do banco ou a senha do modelo.
         const senha = (objFuncionarioModel as any)._senha || objFuncionarioModel.senha || '';
 
         const doc: OptionalId<Document> = {
@@ -71,6 +77,7 @@ export class FuncionarioDAO {
         return objFuncionarioModel;
     }
 
+    /** Exclui o funcionário pelo ID e retorna se houve algum documento removido. */
     public async delete(objFuncionarioModel: Funcionario): Promise<boolean> {
         log.debug("delete()", { idFuncionario: objFuncionarioModel.idFuncionario });
         const collection = await this.getCollection();
@@ -82,6 +89,7 @@ export class FuncionarioDAO {
         return ok;
     }
 
+    /** Atualiza somente os dados presentes no modelo, preservando senha omitida. */
     public async update(objFuncionarioModel: Funcionario): Promise<boolean> {
         log.debug("update()", { idFuncionario: objFuncionarioModel.idFuncionario });
         const collection = await this.getCollection();
@@ -111,10 +119,13 @@ export class FuncionarioDAO {
 
     // ======================== CONSULTAS ========================
 
+    /** Lista funcionários e inclui os dados do cargo associado em cada resultado. */
     public async findAll(): Promise<Funcionario[]> {
         log.debug("findAll()");
         const collection = await this.getCollection();
 
+        // $lookup relaciona as coleções; $unwind transforma o cargo relacionado
+        // em objeto único; $project escolhe os campos que serão devolvidos.
         const pipeline = [
             {
                 $lookup: {
@@ -144,6 +155,7 @@ export class FuncionarioDAO {
         return docs.map(doc => this.toFuncionario(doc));
     }
 
+    /** Busca um funcionário por ID e carrega também os dados do seu cargo. */
     public async findById(idFuncionario: string): Promise<Funcionario | null> {
         log.debug("findById()", { idFuncionario });
         const collection = await this.getCollection();
@@ -180,6 +192,7 @@ export class FuncionarioDAO {
         return this.toFuncionario(docs[0]);
     }
 
+    /** Pesquisa por um campo permitido e retorna os dados já associados ao cargo. */
     public async findByField(field: string, value: any): Promise<Funcionario[]> {
         const allowedFields = ["_id", "nomeFuncionario", "email", "recebeValeTransporte", "cargoId"];
         if (!allowedFields.includes(field)) {
@@ -263,12 +276,14 @@ export class FuncionarioDAO {
 
     // ======================== CONTAGENS ========================
 
+    /** Conta todos os documentos da coleção de funcionários. */
     public async count(): Promise<number> {
         log.debug("count()");
         const collection = await this.getCollection();
         return await collection.countDocuments();
     }
 
+    /** Conta funcionários cujo campo cargoId corresponde ao cargo informado. */
     public async countByCargoId(cargoId: string): Promise<number> {
         log.debug("countByCargoId()", { cargoId });
         const collection = await this.getCollection();
@@ -277,6 +292,7 @@ export class FuncionarioDAO {
 
     // ======================== AUXILIAR ========================
 
+    /** Converte um documento agregado do MongoDB para os modelos da aplicação. */
     private toFuncionario(doc: any): Funcionario {
         const cargo = new Cargo();
         cargo.idCargo = doc.cargo.idCargo.toHexString ? doc.cargo.idCargo.toHexString() : doc.cargo.idCargo;

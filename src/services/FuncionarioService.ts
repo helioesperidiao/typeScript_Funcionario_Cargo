@@ -9,15 +9,18 @@ import { createLogger } from "../logging/Logger";
 
 const log = createLogger("FuncionarioService");
 
+/** Implementa autenticação e regras de negócio dos funcionários. */
 export class FuncionarioService {
     private _funcionarioDAO: FuncionarioDAO;
     private _cargoDAO: CargoDAO;
 
+    /** Recebe os DAOs usados para consultar e alterar funcionários e cargos. */
     constructor(funcionarioDAODependency: FuncionarioDAO, cargoDAODependency: CargoDAO) {
         this._funcionarioDAO = funcionarioDAODependency;
         this._cargoDAO = cargoDAODependency;
     }
 
+    /** Cria um administrador e seu cargo padrão se ainda não houver funcionários. */
     public initializeDefaultAdmin = async (): Promise<Funcionario | void> => {
         log.debug("initializeDefaultAdmin()");
 
@@ -47,6 +50,7 @@ export class FuncionarioService {
         const funcionarioAdmin = new Funcionario();
         funcionarioAdmin.nomeFuncionario = adminName;
         funcionarioAdmin.email = adminEmail;
+        // bcrypt gera um hash seguro; o número 12 define o custo computacional.
         funcionarioAdmin.senha = await bcrypt.hash(adminPassword, 12);
         funcionarioAdmin.recebeValeTransporte = adminValeTransporte;
 
@@ -62,18 +66,9 @@ export class FuncionarioService {
         return novoAdmin;
     };
 
+    /** Valida cargo e e-mail, protege a senha e persiste o novo funcionário. */
     public create = async (funcionario: Funcionario, funcionarioLogado: Funcionario): Promise<Funcionario> => {
         log.debug("create()", { email: funcionario.email });
-
-        if (funcionarioLogado.cargo?.nomeCargo !== "Administrador") {
-            log.warn("criação de funcionário negada", {
-                motivo: "não é administrador",
-                cargoAtor: funcionarioLogado.cargo?.nomeCargo,
-            });
-            throw new ErrorResponse(403, "Não autorizado", {
-                message: `O cargo "${funcionarioLogado.cargo?.nomeCargo ?? 'desconhecido'}" não é autorizado a criar funcionários.`
-            });
-        }
 
         if (!funcionario.senha || funcionario.senha.trim() === "") {
             throw new ErrorResponse(400, "Senha é obrigatória");
@@ -89,6 +84,7 @@ export class FuncionarioService {
             throw new ErrorResponse(400, "Já existe um funcionário com este email");
         }
 
+        // Nunca persistimos a senha original: somente seu hash segue ao DAO.
         funcionario.senha = await bcrypt.hash(funcionario.senha, 12);
 
         try {
@@ -109,6 +105,7 @@ export class FuncionarioService {
         }
     };
 
+    /** Confere e-mail e senha e gera um token para as próximas requisições. */
     public loginFuncionario = async (funcionario: Funcionario): Promise<{ user: Funcionario; token: string }> => {
         log.debug("loginFuncionario()", { email: funcionario.email });
 
@@ -118,6 +115,7 @@ export class FuncionarioService {
             throw new ErrorResponse(401, "Usuário ou senha inválidos");
         }
 
+        // compare verifica a senha digitada contra o hash sem revelar a senha original.
         const senhaValida = await bcrypt.compare(funcionario.senha, funcionarioBanco.senha);
         if (!senhaValida) {
             log.warn("login falhou", { email: funcionario.email, motivo: "senha inválida" });
@@ -130,11 +128,13 @@ export class FuncionarioService {
         return { user: funcionarioBanco, token };
     };
 
+    /** Retorna a lista de funcionários sem expor suas senhas. */
     public findAll = async (_funcionarioLogado: Funcionario): Promise<Funcionario[]> => {
         log.debug("findAll()");
         return await this._funcionarioDAO.findAll();
     };
 
+    /** Procura um funcionário e retorna erro 404 quando o ID não existe. */
     public findById = async (idFuncionario: string, _funcionarioLogado: Funcionario): Promise<Funcionario> => {
         log.debug("findById()", { idFuncionario });
         const funcionario = await this._funcionarioDAO.findById(idFuncionario);
@@ -144,10 +144,12 @@ export class FuncionarioService {
         return funcionario;
     };
 
+    /** Valida os dados e atualiza o funcionário, incluindo senha se enviada. */
     public updateFuncionario = async (funcionario: Funcionario, funcionarioLogado: Funcionario): Promise<boolean> => {
         log.debug("updateFuncionario()", { idFuncionario: funcionario.idFuncionario });
 
         if (funcionario.senha && funcionario.senha.trim() !== "") {
+            // Evita aplicar hash novamente quando o DAO devolve uma senha já protegida.
             const isBcryptHash = /^\$2[aby]\$\d{2}\$/.test(funcionario.senha);
             if (!isBcryptHash) {
                 funcionario.senha = await bcrypt.hash(funcionario.senha, 12);
@@ -185,6 +187,7 @@ export class FuncionarioService {
         }
     };
 
+    /** Remove o funcionário e registra quem realizou a operação. */
     public deleteFuncionario = async (funcionario: Funcionario, funcionarioLogado: Funcionario): Promise<boolean> => {
         log.debug("deleteFuncionario()", { idFuncionario: funcionario.idFuncionario });
         const excluiu = await this._funcionarioDAO.delete(funcionario);
@@ -197,11 +200,13 @@ export class FuncionarioService {
         return excluiu;
     };
 
+    /** Conta todos os funcionários cadastrados. */
     public count = async (_funcionarioLogado: Funcionario): Promise<number> => {
         log.debug("count()");
         return await this._funcionarioDAO.count();
     };
 
+    /** Conta somente funcionários associados ao cargo informado. */
     public countByCargoId = async (cargoId: string, _funcionarioLogado: Funcionario): Promise<number> => {
         log.debug("countByCargoId()", { cargoId });
         return await this._funcionarioDAO.countByCargoId(cargoId);

@@ -109,7 +109,7 @@
         return;
       }
       const objeto = { cargo: { nomeCargo: nome } };
-      const resposta = await api.post("api/v1/cargos", objeto);
+      const resposta = await api.post("api/cargos", objeto);
       if (resposta.success) {
         mostrarMensagem(resposta.message || "Cargo criado com sucesso", "success");
         listAll();
@@ -134,7 +134,7 @@
         return;
       }
       const objeto = { cargo: { nomeCargo: nome } };
-      const resposta = await api.put("api/v1/cargos", id, objeto);
+      const resposta = await api.put("api/cargos", id, objeto);
       if (resposta.success) {
         mostrarMensagem(resposta.message || "Cargo atualizado com sucesso", "success");
         listAll();
@@ -158,7 +158,7 @@
       modal.show();
       const btnConfirmDelete = document.getElementById("btnConfirmDelete");
       btnConfirmDelete.onclick = async () => {
-        const resposta = await api.delete("api/v1/cargos", id);
+        const resposta = await api.delete("api/cargos", id);
         // Trata a resposta (que já está normalizada pelo ApiService)
         if (resposta.success) {
           mostrarMensagem(resposta.message || "Cargo excluído com sucesso", "success");
@@ -176,7 +176,7 @@
 
     // ---------- LISTAR ----------
     async function listAll() {
-      const resposta = await api.get("api/v1/cargos");
+      const resposta = await api.get("api/cargos");
       if (resposta.success) {
         API_DATA = resposta.data;
         renderTable(API_DATA);

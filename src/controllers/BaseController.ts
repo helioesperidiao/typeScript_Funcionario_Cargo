@@ -3,7 +3,9 @@ import { Request } from "express";
 import { Funcionario } from "../models/Funcionario";
 import { ErrorResponse } from "../http/ErrorResponse";
 
+/** Reúne validações e conversões comuns aos controllers da API. */
 export abstract class BaseController {
+    /** Recupera do request o funcionário autenticado pelo middleware JWT. */
     protected getFuncionarioLogado(request: Request): Funcionario {
         const funcionarioLogadoJson = (request as any).funcionarioLogado;
         if (!funcionarioLogadoJson) {
@@ -28,6 +30,7 @@ export abstract class BaseController {
      * (ex.: `{ funcionario: {...} }`, `{ cargo: {...} }`).
      * Lança ErrorResponse(400) caso contrário.
      */
+    /** Exige um objeto com a chave indicada no corpo JSON da requisição. */
     protected requireBody(request: Request, key: string): any {
         const value = request.body?.[key];
         if (!value || typeof value !== "object") {

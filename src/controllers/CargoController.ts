@@ -9,14 +9,17 @@ import { createLogger } from "../logging/Logger";
 
 const log = createLogger("CargoController");
 
+/** Traduz requisições HTTP de cargos em chamadas aos serviços de negócio. */
 export class CargoController extends BaseController {
     private _cargoService: CargoService;
 
+    /** Recebe o serviço responsável pelas regras de negócio de cargos. */
     constructor(cargoServiceDependency: CargoService) {
         super();
         this._cargoService = cargoServiceDependency;
     }
 
+    /** Recebe os dados de um cargo novo e devolve a resposta de criação. */
     public create = async (request: Request, response: Response): Promise<void> => {
         log.debug("create()");
 
@@ -46,6 +49,7 @@ export class CargoController extends BaseController {
         }).send(response);
     };
 
+    /** Lista os cargos disponíveis para o funcionário autenticado. */
     public findAll = async (request: Request, response: Response): Promise<void> => {
         log.debug("findAll()");
         const funcionarioLogado: Funcionario = this.getFuncionarioLogado(request);
@@ -53,6 +57,7 @@ export class CargoController extends BaseController {
         StandardResponse.success("Busca realizada com sucesso", { cargos: arrayCargos }).send(response);
     };
 
+    /** Procura um cargo pelo identificador informado na URL. */
     public findById = async (request: Request, response: Response): Promise<void> => {
         log.debug("findById()", { idCargo: request.params.idCargo });
         const funcionarioLogado: Funcionario = this.getFuncionarioLogado(request);
@@ -67,6 +72,7 @@ export class CargoController extends BaseController {
         StandardResponse.success("Executado com sucesso", { cargos: cargo }).send(response);
     };
 
+    /** Atualiza o nome de um cargo existente. */
     public update = async (request: Request, response: Response): Promise<void> => {
         log.debug("update()", { idCargo: request.params.idCargo });
 
@@ -91,6 +97,7 @@ export class CargoController extends BaseController {
         }
     };
 
+    /** Exclui um cargo, se as regras de negócio permitirem. */
     public delete = async (request: Request, response: Response): Promise<void> => {
         log.debug("delete()", { idCargo: request.params.idCargo });
 
@@ -110,6 +117,7 @@ export class CargoController extends BaseController {
         }
     };
 
+    /** Retorna a quantidade total de cargos cadastrados. */
     public count = async (request: Request, response: Response): Promise<void> => {
         log.debug("count()");
         const funcionarioLogado: Funcionario = this.getFuncionarioLogado(request);
