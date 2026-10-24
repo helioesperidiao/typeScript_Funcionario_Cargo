@@ -1,4 +1,4 @@
-nginx/logs/access.log
-nginx/logs/access.log
-nginx/logs/nginx.pid
-logs/*.log
+nginx/logs/*
+logs/*
+dist/*
+  
