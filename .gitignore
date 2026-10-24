@@ -1,4 +1,37 @@
-nginx/logs/*
-logs/*
-dist/*
-  
+# ============================================================
+# .gitignore â€” gerado por limpar-git.ps1
+# ============================================================
+
+# DependÃªncias
+node_modules/
+
+# Build
+dist/
+
+# Logs da aplicaÃ§Ã£o
+logs/
+
+# Logs do nginx (preserva a configuraÃ§Ã£o do nginx)
+nginx/logs/
+
+# Arquivos que NÃƒO devem ir para o Git
+context.py
+projeto_exportado.txt
+
+# Arquivos de ambiente
+.env
+.env.*
+!.env.example
+
+# Cobertura de testes
+coverage/
+
+# Cache do TypeScript
+*.tsbuildinfo
+
+# Sistema operacional / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
