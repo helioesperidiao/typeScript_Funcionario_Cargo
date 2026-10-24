@@ -1,20 +1,20 @@
 # ============================================================
-# .gitignore â€” gerado por limpar-git.ps1
+# .gitignore - gerado por limpar-git.ps1
 # ============================================================
 
-# DependÃªncias
+# Dependencias
 node_modules/
 
 # Build
 dist/
 
-# Logs da aplicaÃ§Ã£o
+# Logs da aplicacao
 logs/
 
-# Logs do nginx (preserva a configuraÃ§Ã£o do nginx)
+# Logs do nginx (preserva a configuracao do nginx)
 nginx/logs/
 
-# Arquivos que NÃƒO devem ir para o Git
+# Arquivos que NAO devem ir para o Git
 context.py
 projeto_exportado.txt
 
@@ -35,3 +35,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# Backups locais gerados por este script
+.gitignore.bak
